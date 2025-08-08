@@ -21,11 +21,11 @@
             opacity: 0.6;
             pointer-events: none;
         }
-        .delete-btn {
+        .delete-btn, .edit-btn {
             opacity: 0;
             transition: opacity 0.3s ease;
         }
-        .transaction-item:hover .delete-btn {
+        .transaction-item:hover .delete-btn, .transaction-item:hover .edit-btn {
             opacity: 1;
         }
     </style>
@@ -42,9 +42,43 @@
                         <span>🔗 เชื่อมต่อกับ Google Sheets</span>
                         <div id="connectionStatus" class="w-3 h-3 bg-red-400 rounded-full"></div>
                     </div>
-                    <div id="setupInstructions" class="text-xs text-center max-w-md">
-                        <p class="text-amber-600 font-medium">⚠️ ยังไม่ได้ตั้งค่า Google Sheets</p>
-                        <p class="mt-1">กรุณาแทนที่ <code class="bg-slate-200 px-1 rounded">YOUR_GOOGLE_SCRIPT_URL_HERE</code> ด้วย URL ของ Google Apps Script ที่คุณสร้าง</p>
+                    <div id="setupInstructions" class="text-xs text-center max-w-4xl">
+                         <details class="mt-2 text-left cursor-pointer">
+                            <summary class="text-blue-600 hover:text-blue-800 font-medium">📖 คลิกเพื่อดูวิธีตั้งค่า (สำคัญมาก)</summary>
+                            <div class="mt-3 p-4 bg-blue-50 rounded-lg text-slate-700 space-y-4">
+                                <div class="bg-white p-3 rounded border-l-4 border-purple-500">
+                                    <h3 class="font-bold text-purple-700 mb-2">🚀 Deploy และเชื่อมต่อ (ทำตามทุกขั้นตอน)</h3>
+                                    <ol class="list-decimal list-inside space-y-1 text-sm">
+                                        <li>เปิด <a href="https://script.google.com/home/projects/create" target="_blank" class="text-blue-600 underline font-medium">Google Apps Script</a> และสร้างโปรเจกต์ใหม่</li>
+                                        <li>ลบโค้ดเดิมทั้งหมด แล้วคัดลอกโค้ดด้านล่างไปวาง</li>
+                                        <li>**สำคัญ:** แก้ไข `SPREADSHEET_ID` ในโค้ดให้เป็น ID ของ Google Sheets ของคุณ</li>
+                                        <li>คลิก "Deploy" > "New deployment"</li>
+                                        <li>ที่หน้าต่าง "Select type" คลิกที่รูปเฟือง ⚙️ และเลือก "Web app"</li>
+                                        <li>ตั้งค่า "Who has access" เป็น **"Anyone"** (ทุกคน)</li>
+                                        <li>คลิก "Deploy" และ **"Authorize access"** เพื่อให้สิทธิ์สคริปต์ทำงาน</li>
+                                        <li>คัดลอก **Web app URL** ที่ได้ มาใส่ในโค้ด HTML ด้านล่างนี้</li>
+                                    </ol>
+                                </div>
+                                <div class="mt-2 bg-gray-900 text-green-400 p-3 rounded text-xs overflow-x-auto">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-yellow-400">📋 Google Apps Script Code</span>
+                                        <button onclick="copyGoogleScript()" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">คัดลอก</button>
+                                    </div>
+                                    <pre id="googleScriptCode" class="whitespace-pre-wrap">const SPREADSHEET_ID = '1dFqF8Kt95kCLEiFFH-Y16R4Xn6HRSbfYea7W-4jJVks';
+
+function doGet(e){var t=e.parameter.action;try{if("getTransactions"===t)return getTransactions();if("getLoans"===t)return getLoans();return ContentService.createTextOutput(JSON.stringify({success:!1,error:"Invalid action"})).setMimeType(ContentService.MimeType.JSON)}catch(e){return ContentService.createTextOutput(JSON.stringify({success:!1,error:e.toString()})).setMimeType(ContentService.MimeType.JSON)}}
+function doPost(e){var t=JSON.parse(e.postData.contents),o=t.action;try{return"addTransaction"===o?addTransaction(t):"updateTransaction"===o?updateTransaction(t):"deleteTransaction"===o?deleteTransaction(t):"addLoan"===o?addLoan(t):"updateLoan"===o?updateLoan(t):"deleteLoan"===o?deleteLoan(t):ContentService.createTextOutput(JSON.stringify({success:!1,error:"Invalid action"})).setMimeType(ContentService.MimeType.JSON)}catch(e){return ContentService.createTextOutput(JSON.stringify({success:!1,error:e.toString()})).setMimeType(ContentService.MimeType.JSON)}}
+function getTransactions(){var e=SpreadsheetApp.openById(SPREADSHEET_ID),t=e.getSheetByName("Transactions");t||(t=e.insertSheet("Transactions")).getRange(1,1,1,10).setValues([["วันที่","เวลา","ประเภท","จำนวนเงิน","หมวดหมู่","วิธีการชำระ","รายละเอียด","สถานะ","id","timestamp"]]);for(var o=t.getDataRange().getValues(),a=[],n=1;n<o.length;n++)a.push({date:o[n][0],time:o[n][1],type:o[n][2],amount:o[n][3],category:o[n][4],payment_method:o[n][5],description:o[n][6],status:o[n][7],id:o[n][8],timestamp:o[n][9]});return ContentService.createTextOutput(JSON.stringify({success:!0,data:a})).setMimeType(ContentService.MimeType.JSON)}
+function addTransaction(e){var t=SpreadsheetApp.openById(SPREADSHEET_ID),o=t.getSheetByName("Transactions");o||(o=t.insertSheet("Transactions")).getRange(1,1,1,10).setValues([["วันที่","เวลา","ประเภท","จำนวนเงิน","หมวดหมู่","วิธีการชำระ","รายละเอียด","สถานะ","id","timestamp"]]);var a=new Date;return o.appendRow([e.date,a.toLocaleTimeString("th-TH"),e.type,e.amount,e.category,e.payment_method,e.description,"active",e.id,e.timestamp]),ContentService.createTextOutput(JSON.stringify({success:!0})).setMimeType(ContentService.MimeType.JSON)}
+function updateTransaction(e){for(var t=SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName("Transactions").getDataRange().getValues(),o=1;o<t.length;o++)if(t[o][8]==e.id){var a=new Date;SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName("Transactions").getRange(o+1,1,1,10).setValues([[e.date,a.toLocaleTimeString("th-TH"),e.type,e.amount,e.category,e.payment_method,e.description,"active",e.id,e.timestamp]]);break}return ContentService.createTextOutput(JSON.stringify({success:!0})).setMimeType(ContentService.MimeType.JSON)}
+function deleteTransaction(e){for(var t=SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName("Transactions").getDataRange().getValues(),o=1;o<t.length;o++)if(t[o][8]==e.id){SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName("Transactions").deleteRow(o+1);break}return ContentService.createTextOutput(JSON.stringify({success:!0})).setMimeType(ContentService.MimeType.JSON)}
+function getLoans(){var e=SpreadsheetApp.openById(SPREADSHEET_ID),t=e.getSheetByName("Loans");t||(t=e.insertSheet("Loans")).getRange(1,1,1,10).setValues([["วันที่","เวลา","ประเภท","จำนวนเงิน","หมวดหมู่","วิธีการชำระ","รายละเอียด","สถานะ","id","timestamp"]]);for(var o=t.getDataRange().getValues(),a=[],n=1;n<o.length;n++)a.push({date:o[n][0],time:o[n][1],type:o[n][2],amount:o[n][3],category:o[n][4],payment_method:o[n][5],description:o[n][6],status:o[n][7],id:o[n][8],timestamp:o[n][9]});return ContentService.createTextOutput(JSON.stringify({success:!0,data:a})).setMimeType(ContentService.MimeType.JSON)}
+function addLoan(e){var t=SpreadsheetApp.openById(SPREADSHEET_ID),o=t.getSheetByName("Loans");o||(o=t.insertSheet("Loans")).getRange(1,1,1,10).setValues([["วันที่","เวลา","ประเภท","จำนวนเงิน","หมวดหมู่","วิธีการชำระ","รายละเอียด","สถานะ","id","timestamp"]]);var a=new Date;return o.appendRow([e.startDate,a.toLocaleTimeString("th-TH"),e.type,e.amount,e.name,"loan",e.note,"active",e.id,e.timestamp]),ContentService.createTextOutput(JSON.stringify({success:!0})).setMimeType(ContentService.MimeType.JSON)}
+function updateLoan(e){for(var t=SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName("Loans").getDataRange().getValues(),o=1;o<t.length;o++)if(t[o][8]==e.id){var a=new Date;SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName("Loans").getRange(o+1,1,1,10).setValues([[e.startDate,a.toLocaleTimeString("th-TH"),e.type,e.amount,e.name,"loan",e.note,"active",e.id,e.timestamp]]);break}return ContentService.createTextOutput(JSON.stringify({success:!0})).setMimeType(ContentService.MimeType.JSON)}
+function deleteLoan(e){for(var t=SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName("Loans").getDataRange().getValues(),o=1;o<t.length;o++)if(t[o][8]==e.id){SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName("Loans").deleteRow(o+1);break}return ContentService.createTextOutput(JSON.stringify({success:!0})).setMimeType(ContentService.MimeType.JSON)}</pre>
+                                </div>
+                            </div>
+                        </details>
                     </div>
                 </div>
             </div>
@@ -256,10 +290,61 @@
         </div>
     </div>
 
+    <!-- Edit Transaction Modal -->
+    <div id="editTransactionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="pearl-gradient rounded-2xl pearl-shadow p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-slate-700">✏️ แก้ไขรายการ</h2>
+                <button onclick="closeEditModal()" class="text-slate-500 hover:text-slate-700 text-2xl">×</button>
+            </div>
+            <form id="editTransactionForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <input type="hidden" id="editTransactionId">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-3">ประเภทรายการ</label>
+                    <select id="editType" class="w-full p-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-transparent bg-white/80 backdrop-blur-sm transition-all">
+                        <option value="income">💰 รายรับ</option>
+                        <option value="expense">💸 รายจ่าย</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-3">จำนวนเงิน (บาท)</label>
+                    <input type="number" id="editAmount" step="0.01" class="w-full p-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-transparent bg-white/80 backdrop-blur-sm transition-all" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-3">หมวดหมู่</label>
+                    <input type="text" id="editCategory" class="w-full p-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-transparent bg-white/80 backdrop-blur-sm transition-all" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-3">วิธีการชำระ</label>
+                    <select id="editPaymentMethod" class="w-full p-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-transparent bg-white/80 backdrop-blur-sm transition-all">
+                        <option value="cash">💵 เงินสด</option>
+                        <option value="credit_card">💳 บัตรเครดิต</option>
+                        <option value="transfer">🏦 เงินโอน</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-3">รายละเอียด</label>
+                    <input type="text" id="editDescription" class="w-full p-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-transparent bg-white/80 backdrop-blur-sm transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-3">วันที่</label>
+                    <input type="date" id="editDate" class="w-full p-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-transparent bg-white/80 backdrop-blur-sm transition-all" required>
+                </div>
+                <div class="flex items-end space-x-4 md:col-span-2">
+                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-slate-300 hover:bg-slate-400 text-slate-700 font-medium py-4 px-6 rounded-xl transition-all">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white font-medium py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                        บันทึกการแก้ไข
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // --- CONFIGURATION ---
-        // Google Apps Script Web App URL - ใส่ URL ของคุณที่นี่
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwgdS9mBc6u5XJB9Mb9UZWpRBe2rWeu1l2ZNQbYz2_N7w0iMu82nxQCldonHT0B4IO/exec'; 
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxLDL8-6ErwYcq-7a55VYZP1ctMl-G_9YqxUKkDnIK3fgBqONfNBzjvg7oySut499c2/exec'; 
 
         // --- GLOBAL STATE ---
         let currentDate = new Date();
@@ -272,158 +357,157 @@
         });
 
         async function initializeApp() {
-            // Set today's date as default
             document.getElementById('date').valueAsDate = new Date();
             document.getElementById('loanStartDate').valueAsDate = new Date();
-            
-            // Setup event listeners
             setupEventListeners();
+            await loadAllData();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('recordTab').addEventListener('click', () => switchTab('record'));
+            document.getElementById('calendarTab').addEventListener('click', () => switchTab('calendar'));
+            document.getElementById('loanTab').addEventListener('click', () => switchTab('loan'));
             
-            // Load initial data
+            document.getElementById('transactionForm').addEventListener('submit', handleTransactionSubmit);
+            document.getElementById('loanForm').addEventListener('submit', handleLoanSubmit);
+            document.getElementById('editTransactionForm').addEventListener('submit', handleEditTransactionSubmit);
+            
+            document.getElementById('prevMonth').addEventListener('click', () => navigateMonth(-1));
+            document.getElementById('nextMonth').addEventListener('click', () => navigateMonth(1));
+
+            // Event delegation for dynamic buttons
+            document.getElementById('recentTransactions').addEventListener('click', (e) => {
+                if (e.target.closest('.delete-btn')) {
+                    const id = e.target.closest('.delete-btn').dataset.id;
+                    deleteTransaction(id);
+                }
+                if (e.target.closest('.edit-btn')) {
+                    const id = e.target.closest('.edit-btn').dataset.id;
+                    openEditModal(id);
+                }
+            });
+        }
+        
+        async function loadAllData() {
             await loadTransactions();
             await loadLoans();
             updateCalendar();
             updateLoanSummary();
         }
 
-        function setupEventListeners() {
-            // Tab switching
-            document.getElementById('recordTab').addEventListener('click', () => switchTab('record'));
-            document.getElementById('calendarTab').addEventListener('click', () => switchTab('calendar'));
-            document.getElementById('loanTab').addEventListener('click', () => switchTab('loan'));
-            
-            // Form submission
-            document.getElementById('transactionForm').addEventListener('submit', handleTransactionSubmit);
-            document.getElementById('loanForm').addEventListener('submit', handleLoanSubmit);
-            
-            // Calendar navigation
-            document.getElementById('prevMonth').addEventListener('click', () => navigateMonth(-1));
-            document.getElementById('nextMonth').addEventListener('click', () => navigateMonth(1));
-
-            // Dynamic event listeners for delete buttons
-            document.getElementById('recentTransactions').addEventListener('click', (e) => {
-                if (e.target.closest('.delete-transaction-btn')) {
-                    const button = e.target.closest('.delete-transaction-btn');
-                    const transactionId = button.dataset.id;
-                    handleDeleteTransaction(transactionId);
-                }
-            });
-
-            document.getElementById('loanList').addEventListener('click', (e) => {
-                if (e.target.closest('.delete-loan-btn')) {
-                    const button = e.target.closest('.delete-loan-btn');
-                    const loanId = button.dataset.id;
-                    handleDeleteLoan(loanId);
-                }
-            });
-        }
-
         // --- UI & TAB MANAGEMENT ---
         function switchTab(tab) {
-            const tabs = {
-                record: { btn: document.getElementById('recordTab'), section: document.getElementById('recordSection') },
-                calendar: { btn: document.getElementById('calendarTab'), section: document.getElementById('calendarSection') },
-                loan: { btn: document.getElementById('loanTab'), section: document.getElementById('loanSection') }
-            };
-
-            // Reset all tabs and hide all sections
-            Object.values(tabs).forEach(item => {
-                item.btn.className = 'px-8 py-4 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-800 hover:bg-white/50';
-                item.section.classList.add('hidden');
+            ['record', 'calendar', 'loan'].forEach(t => {
+                document.getElementById(`${t}Tab`).className = 'px-8 py-4 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-800 hover:bg-white/50';
+                document.getElementById(`${t}Section`).classList.add('hidden');
             });
-
-            // Activate the selected tab
-            tabs[tab].btn.className = 'px-8 py-4 rounded-lg font-medium transition-all bg-slate-600 text-white shadow-lg';
-            tabs[tab].section.classList.remove('hidden');
-
-            // Update data if needed
+            document.getElementById(`${tab}Tab`).className = 'px-8 py-4 rounded-lg font-medium transition-all bg-slate-600 text-white shadow-lg';
+            document.getElementById(`${tab}Section`).classList.remove('hidden');
             if (tab === 'calendar') updateCalendar();
-            if (tab === 'loan') {
-                displayLoans();
-                updateLoanSummary();
-            }
+            if (tab === 'loan') updateLoanSummary();
         }
 
-        // --- API & DATA HANDLING (TRANSACTIONS) ---
+        // --- API & DATA HANDLING ---
+        async function apiCall(action, payload = {}) {
+            if (!isApiConfigured()) {
+                throw new Error("API URL not configured.");
+            }
+            
+            const body = { action, ...payload };
+            
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Use text/plain to avoid preflight
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        }
+
         async function handleTransactionSubmit(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
             setLoadingState(submitBtn, true);
 
             const formData = {
+                id: Date.now().toString(),
                 type: document.getElementById('type').value,
                 amount: parseFloat(document.getElementById('amount').value),
                 category: document.getElementById('category').value,
                 payment_method: document.getElementById('paymentMethod').value,
                 description: document.getElementById('description').value || '-',
                 date: document.getElementById('date').value,
-                timestamp: new Date().toISOString(),
-                id: Date.now().toString() // Ensure ID is a string
+                timestamp: new Date().toISOString()
             };
 
-            // Optimistic UI update
             transactions.unshift(formData);
             displayRecentTransactions();
             updateCalendar();
-            document.getElementById('transactionForm').reset();
+            e.target.reset();
             document.getElementById('date').valueAsDate = new Date();
 
             try {
-                if (isApiConfigured()) {
-                    const response = await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        // **FIXED**: Wrap data in a 'data' object as expected by GAS
-                        body: JSON.stringify({ action: 'addTransaction', data: formData })
-                    });
-                    const result = await response.json();
-                    if (!result.success) throw new Error(result.error || 'Unknown error');
-                    
-                    console.log('✅ บันทึกข้อมูลไป Google Sheets สำเร็จ');
-                    showNotification('✅ บันทึกรายการเรียบร้อยแล้ว!', 'success');
-                    updateConnectionStatus(true);
-                } else {
-                    showNotification('✅ บันทึกรายการ (โหมดออฟไลน์)', 'info');
-                    updateConnectionStatus(false);
-                }
+                await apiCall('addTransaction', formData);
+                showNotification('✅ บันทึกรายการเรียบร้อยแล้ว!', 'success');
             } catch (error) {
-                console.error('Error connecting to Google Sheets:', error);
-                showNotification('⚠️ บันทึกรายการ (ออฟไลน์), เชื่อมต่อไม่สำเร็จ', 'warning');
-                updateConnectionStatus(false);
+                console.error('Error adding transaction:', error);
+                showNotification('⚠️ บันทึกออฟไลน์, เชื่อมต่อไม่สำเร็จ', 'warning');
             } finally {
-                setLoadingState(submitBtn, false, '✅ บันทึกรายการ', '⏳ กำลังบันทึก...');
+                setLoadingState(submitBtn, false);
+            }
+        }
+        
+        async function handleEditTransactionSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('editTransactionId').value;
+            const updatedData = {
+                id: id,
+                type: document.getElementById('editType').value,
+                amount: parseFloat(document.getElementById('editAmount').value),
+                category: document.getElementById('editCategory').value,
+                payment_method: document.getElementById('editPaymentMethod').value,
+                description: document.getElementById('editDescription').value || '-',
+                date: document.getElementById('editDate').value,
+                timestamp: new Date().toISOString()
+            };
+
+            const index = transactions.findIndex(t => t.id == id);
+            if (index !== -1) {
+                transactions[index] = updatedData;
+            }
+            displayRecentTransactions();
+            updateCalendar();
+            closeEditModal();
+
+            try {
+                await apiCall('updateTransaction', updatedData);
+                showNotification('✅ แก้ไขรายการเรียบร้อยแล้ว!', 'success');
+            } catch (error) {
+                console.error('Error updating transaction:', error);
+                showNotification('⚠️ แก้ไขออฟไลน์, เชื่อมต่อไม่สำเร็จ', 'warning');
+                // Note: You might want to add logic to revert the change if the API call fails.
             }
         }
 
-        async function handleDeleteTransaction(transactionId) {
-            if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?')) return;
-
-            // Optimistic UI update
+        async function deleteTransaction(id) {
+            if (!confirm('คุณต้องการลบรายการนี้หรือไม่?')) return;
+            
             const originalTransactions = [...transactions];
-            transactions = transactions.filter(t => t.id != transactionId);
+            transactions = transactions.filter(t => t.id != id);
             displayRecentTransactions();
             updateCalendar();
-            showNotification('🗑️ ลบรายการแล้ว', 'info');
 
             try {
-                if (isApiConfigured()) {
-                    const response = await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        // **NEW**: Send delete request
-                        body: JSON.stringify({ action: 'deleteTransaction', data: { id: transactionId } })
-                    });
-                    const result = await response.json();
-                    if (!result.success) throw new Error(result.error || 'Unknown error');
-                    console.log('✅ ลบข้อมูลจาก Google Sheets สำเร็จ');
-                }
+                await apiCall('deleteTransaction', { id });
+                showNotification('🗑️ ลบรายการแล้ว', 'info');
             } catch (error) {
-                console.error('Error deleting from Google Sheets:', error);
-                showNotification('⚠️ ไม่สามารถลบจาก Google Sheets ได้', 'error');
-                // Revert UI if API call fails
-                transactions = originalTransactions;
+                console.error('Error deleting transaction:', error);
+                showNotification('⚠️ ไม่สามารถลบได้, เชื่อมต่อไม่สำเร็จ', 'error');
+                transactions = originalTransactions; // Revert
                 displayRecentTransactions();
                 updateCalendar();
             }
@@ -431,142 +515,86 @@
 
         async function loadTransactions() {
             if (!isApiConfigured()) {
-                console.log('Google Script URL not configured, using offline mode');
                 updateConnectionStatus(false);
                 showSampleData();
-                showNotification('🔧 กรุณาตั้งค่า Google Script URL ก่อนใช้งาน', 'info');
                 return;
             }
-
             try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getTransactions&timestamp=${Date.now()}`);
-                const data = await response.json();
-                if (data.success) {
-                    transactions = data.data || [];
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getTransactions&t=${Date.now()}`);
+                const result = await response.json();
+                if (result.success) {
+                    transactions = result.data || [];
                     displayRecentTransactions();
                     updateConnectionStatus(true);
-                    showNotification('✅ เชื่อมต่อ Google Sheets สำเร็จ!', 'success');
                 } else {
-                    throw new Error(data.error || 'Unknown error');
+                    throw new Error(result.error);
                 }
             } catch (error) {
                 console.error('Error loading transactions:', error);
                 updateConnectionStatus(false);
                 showSampleData();
-                showNotification('⚠️ ไม่สามารถเชื่อมต่อ Google Sheets ได้, กำลังใช้โหมดออฟไลน์', 'warning');
             }
         }
 
-        // --- API & DATA HANDLING (LOANS) ---
+        // --- LOAN FUNCTIONS (Simplified based on script) ---
         async function handleLoanSubmit(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('loanSubmitBtn');
             setLoadingState(submitBtn, true);
 
             const loanData = {
-                type: document.getElementById('loanType').value,
-                name: document.getElementById('loanName').value,
-                amount: parseFloat(document.getElementById('loanAmount').value),
-                interestRate: parseFloat(document.getElementById('interestRate').value),
-                term: parseInt(document.getElementById('loanTerm').value),
+                id: Date.now().toString(),
                 startDate: document.getElementById('loanStartDate').value,
+                type: document.getElementById('loanType').value,
+                amount: parseFloat(document.getElementById('loanAmount').value),
+                name: document.getElementById('loanName').value,
                 note: document.getElementById('loanNote').value || '-',
-                timestamp: new Date().toISOString(),
-                id: Date.now().toString() // Ensure ID is a string
+                timestamp: new Date().toISOString()
+            };
+            
+            // The script uses transaction-like columns, so we adapt the local object
+            const loanForDisplay = {
+                id: loanData.id,
+                date: loanData.startDate,
+                type: loanData.type,
+                amount: loanData.amount,
+                category: loanData.name, // Use name as category
+                description: loanData.note, // Use note as description
+                payment_method: 'loan',
+                status: 'active',
+                timestamp: loanData.timestamp
             };
 
-            const monthlyRate = loanData.interestRate / 100 / 12;
-            loanData.monthlyPayment = monthlyRate === 0
-                ? loanData.amount / loanData.term
-                : loanData.amount * (monthlyRate * Math.pow(1 + monthlyRate, loanData.term)) / (Math.pow(1 + monthlyRate, loanData.term) - 1);
-
-            // Optimistic UI update
-            loans.push(loanData);
+            loans.unshift(loanForDisplay);
             displayLoans();
             updateLoanSummary();
-            document.getElementById('loanForm').reset();
+            e.target.reset();
             document.getElementById('loanStartDate').valueAsDate = new Date();
 
             try {
-                if (isApiConfigured()) {
-                    const response = await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'cors',
-                        headers: { 'Content-Type': 'application/json' },
-                         // **FIXED**: Wrap data in a 'data' object as expected by GAS
-                        body: JSON.stringify({ action: 'addLoan', data: loanData })
-                    });
-                    const result = await response.json();
-                    if (!result.success) throw new Error(result.error || 'Unknown error');
-                    console.log('✅ บันทึกข้อมูลสินเชื่อไป Google Sheets สำเร็จ');
-                    showNotification('💳 เพิ่มสินเชื่อเรียบร้อยแล้ว!', 'success');
-                } else {
-                     showNotification('💳 เพิ่มสินเชื่อ (โหมดออฟไลน์)', 'info');
-                }
+                await apiCall('addLoan', loanData);
+                showNotification('✅ เพิ่มสินเชื่อเรียบร้อยแล้ว!', 'success');
             } catch (error) {
-                console.error('Error saving loan to Google Sheets:', error);
-                showNotification('⚠️ บันทึกสินเชื่อ (ออฟไลน์), เชื่อมต่อไม่สำเร็จ', 'warning');
+                console.error('Error adding loan:', error);
+                showNotification('⚠️ เพิ่มสินเชื่อออฟไลน์, เชื่อมต่อไม่สำเร็จ', 'warning');
             } finally {
-                setLoadingState(submitBtn, false, '✅ เพิ่มสินเชื่อ', '⏳ กำลังบันทึก...');
+                setLoadingState(submitBtn, false);
             }
         }
-        
-        async function handleDeleteLoan(loanId) {
-             if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบสินเชื่อนี้?')) return;
-
-            // Optimistic UI update
-            const originalLoans = [...loans];
-            loans = loans.filter(l => l.id != loanId);
-            displayLoans();
-            updateLoanSummary();
-            showNotification('🗑️ ลบสินเชื่อแล้ว', 'info');
-
-            try {
-                if (isApiConfigured()) {
-                    const response = await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        // **NEW**: Send delete request
-                        body: JSON.stringify({ action: 'deleteLoan', data: { id: loanId } })
-                    });
-                    const result = await response.json();
-                    if (!result.success) throw new Error(result.error || 'Unknown error');
-                    console.log('✅ ลบสินเชื่อจาก Google Sheets สำเร็จ');
-                }
-            } catch (error) {
-                console.error('Error deleting loan from Google Sheets:', error);
-                showNotification('⚠️ ไม่สามารถลบสินเชื่อจาก Google Sheets ได้', 'error');
-                // Revert UI if API call fails
-                loans = originalLoans;
-                displayLoans();
-                updateLoanSummary();
-            }
-        }
-
 
         async function loadLoans() {
-            if (!isApiConfigured()) {
-                loans = [];
-                displayLoans();
-                updateLoanSummary();
-                return;
-            }
+            if (!isApiConfigured()) return;
             try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLoans&timestamp=${Date.now()}`);
-                const data = await response.json();
-                if (data.success) {
-                    loans = data.data || [];
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLoans&t=${Date.now()}`);
+                const result = await response.json();
+                if (result.success) {
+                    loans = result.data || [];
                     displayLoans();
-                    updateLoanSummary();
                 } else {
-                    throw new Error(data.error || 'Unknown error');
+                    throw new Error(result.error);
                 }
             } catch (error) {
                 console.error('Error loading loans:', error);
-                loans = [];
-                displayLoans();
-                updateLoanSummary();
             }
         }
 
@@ -577,81 +605,80 @@
                 container.innerHTML = `<div class="text-center py-8 text-slate-500"><div class="text-4xl mb-2">📝</div><p>ยังไม่มีรายการ เริ่มบันทึกรายการแรกของคุณเลย!</p></div>`;
                 return;
             }
-            const recentTransactions = transactions.slice(0, 10);
-            container.innerHTML = recentTransactions.map(transaction => {
-                const isIncome = transaction.type === 'income';
+            container.innerHTML = transactions.slice(0, 10).map(t => {
+                const isIncome = t.type === 'income';
                 const paymentIcon = { 'cash': '💵', 'credit_card': '💳', 'transfer': '🏦' };
                 return `
-                    <div class="transaction-item flex justify-between items-center p-5 bg-white/60 backdrop-blur-sm border border-slate-200 rounded-xl hover:bg-white/80 transition-all transform hover:scale-[1.02] pearl-shadow">
-                        <div class="flex-1">
+                    <div class="transaction-item flex justify-between items-center p-5 bg-white/60 backdrop-blur-sm border border-slate-200 rounded-xl hover:bg-white/80 transition-all">
+                        <div class="flex-1 overflow-hidden">
                             <div class="flex items-center space-x-3 mb-2">
                                 <span class="text-2xl">${isIncome ? '💰' : '💸'}</span>
-                                <span class="font-semibold text-slate-700">${transaction.category}</span>
-                                <span class="text-lg">${paymentIcon[transaction.payment_method] || ''}</span>
+                                <span class="font-semibold text-slate-700 truncate">${t.category}</span>
+                                <span class="text-lg">${paymentIcon[t.payment_method] || ''}</span>
                             </div>
-                            <div class="text-sm text-slate-600 ml-8">
-                                ${transaction.description} • ${new Date(transaction.date).toLocaleDateString('th-TH')}
-                            </div>
+                            <div class="text-sm text-slate-600 ml-10 truncate">${t.description} • ${new Date(t.date).toLocaleDateString('th-TH')}</div>
                         </div>
-                        <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2 ml-4">
                             <div class="text-right">
                                 <div class="font-bold text-lg ${isIncome ? 'text-emerald-600' : 'text-rose-600'}">
-                                    ${isIncome ? '+' : '-'}${transaction.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿
+                                    ${isIncome ? '+' : '-'}${t.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿
                                 </div>
                             </div>
-                            <button class="delete-transaction-btn delete-btn text-rose-500 hover:text-rose-700 p-2 rounded-full hover:bg-rose-100 transition-all" data-id="${transaction.id}" title="ลบรายการนี้">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                            </button>
+                            <button class="edit-btn p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-all" data-id="${t.id}" title="แก้ไข">✏️</button>
+                            <button class="delete-btn p-2 text-red-600 hover:bg-red-100 rounded-full transition-all" data-id="${t.id}" title="ลบ">🗑️</button>
                         </div>
                     </div>`;
             }).join('');
         }
-
+        
         function displayLoans() {
             const container = document.getElementById('loanList');
             if (loans.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-500"><div class="text-4xl mb-2">💳</div><p>ยังไม่มีสินเชื่อ เริ่มเพิ่มสินเชื่อแรกของคุณเลย!</p></div>`;
+                container.innerHTML = `<div class="text-center py-8 text-slate-500"><div class="text-4xl mb-2">💳</div><p>ยังไม่มีสินเชื่อ</p></div>`;
                 return;
             }
-            container.innerHTML = loans.map(loan => {
-                const typeIcons = { 'personal': '🏦', 'home': '🏠', 'car': '🚗', 'credit_card': '💳', 'other': '📋' };
-                const totalInterest = (loan.monthlyPayment * loan.term) - loan.amount;
-                return `
-                    <div class="transaction-item bg-white/60 backdrop-blur-sm border border-slate-200 rounded-xl p-6 hover:bg-white/80 transition-all transform hover:scale-[1.02] pearl-shadow relative">
-                         <button class="delete-loan-btn delete-btn absolute top-4 right-4 text-rose-500 hover:text-rose-700 p-2 rounded-full hover:bg-rose-100 transition-all" data-id="${loan.id}" title="ลบสินเชื่อนี้">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                        </button>
-                        <div class="flex items-center space-x-3 mb-4">
-                            <span class="text-3xl">${typeIcons[loan.type]}</span>
-                            <div>
-                                <h3 class="font-semibold text-slate-700 text-lg">${loan.name}</h3>
-                                <p class="text-sm text-slate-600">${loan.note}</p>
-                            </div>
+            container.innerHTML = loans.map(loan => `
+                <div class="transaction-item bg-white/60 p-6 rounded-xl border border-slate-200">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-semibold text-slate-700 text-lg">${loan.category}</h3>
+                            <p class="text-sm text-slate-600">${loan.description}</p>
                         </div>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                            <div class="text-center"><div class="text-lg font-bold text-orange-600">${loan.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div><div class="text-xs text-slate-600">เงินกู้</div></div>
-                            <div class="text-center"><div class="text-lg font-bold text-red-600">${loan.monthlyPayment.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div><div class="text-xs text-slate-600">ผ่อน/เดือน</div></div>
-                            <div class="text-center"><div class="text-lg font-bold text-blue-600">${loan.interestRate}%</div><div class="text-xs text-slate-600">ดอกเบี้ย</div></div>
-                            <div class="text-center"><div class="text-lg font-bold text-purple-600">${loan.term}</div><div class="text-xs text-slate-600">ระยะเวลา(เดือน)</div></div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-orange-600">${parseFloat(loan.amount).toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿</div>
+                            <div class="text-xs text-slate-500">${new Date(loan.date).toLocaleDateString('th-TH')}</div>
                         </div>
-                        <div class="flex justify-between text-sm text-slate-600">
-                            <span>เริ่มผ่อน: ${new Date(loan.startDate).toLocaleDateString('th-TH')}</span>
-                            <span>ดอกเบี้ยรวม: ${totalInterest.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿</span>
-                        </div>
-                    </div>`;
-            }).join('');
+                    </div>
+                </div>
+            `).join('');
         }
 
         function updateLoanSummary() {
             const totalLoansCount = loans.length;
-            const totalDebt = loans.reduce((sum, loan) => sum + loan.amount, 0);
-            const monthlyPaymentSum = loans.reduce((sum, loan) => sum + (loan.monthlyPayment || 0), 0);
-            const totalInterest = loans.reduce((sum, loan) => sum + ((loan.monthlyPayment * loan.term) - loan.amount), 0);
-
+            const totalDebt = loans.reduce((sum, loan) => sum + parseFloat(loan.amount), 0);
             document.getElementById('totalLoans').textContent = totalLoansCount;
             document.getElementById('totalDebt').textContent = totalDebt.toLocaleString('th-TH', {minimumFractionDigits: 2});
-            document.getElementById('monthlyPayment').textContent = monthlyPaymentSum.toLocaleString('th-TH', {minimumFractionDigits: 2});
-            document.getElementById('totalInterest').textContent = totalInterest.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            // Simplified summary as detailed data is not in the script
+            document.getElementById('monthlyPayment').textContent = 'N/A';
+            document.getElementById('totalInterest').textContent = 'N/A';
+        }
+
+        // --- MODAL FUNCTIONS ---
+        function openEditModal(id) {
+            const transaction = transactions.find(t => t.id == id);
+            if (!transaction) return;
+            document.getElementById('editTransactionId').value = transaction.id;
+            document.getElementById('editType').value = transaction.type;
+            document.getElementById('editAmount').value = transaction.amount;
+            document.getElementById('editCategory').value = transaction.category;
+            document.getElementById('editPaymentMethod').value = transaction.payment_method;
+            document.getElementById('editDescription').value = transaction.description;
+            document.getElementById('editDate').value = new Date(transaction.date).toISOString().split('T')[0];
+            document.getElementById('editTransactionModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editTransactionModal').classList.add('hidden');
         }
 
         // --- CALENDAR FUNCTIONS ---
@@ -663,132 +690,104 @@
         function updateCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            
             document.getElementById('currentMonth').textContent = new Date(year, month).toLocaleDateString('th-TH', { year: 'numeric', month: 'long' });
-
             const monthlyTransactions = transactions.filter(t => {
-                const transactionDate = new Date(t.date);
-                return transactionDate.getFullYear() === year && transactionDate.getMonth() === month;
+                const d = new Date(t.date);
+                return d.getFullYear() === year && d.getMonth() === month;
             });
-
             updateMonthlySummary(monthlyTransactions);
             generateCalendarGrid(year, month, monthlyTransactions);
         }
 
-        function updateMonthlySummary(monthlyTransactions) {
-            const income = monthlyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + parseFloat(t.amount), 0);
-            const expense = monthlyTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
-            const balance = income - expense;
-
+        function updateMonthlySummary(monthly) {
+            const income = monthly.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const expense = monthly.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
             document.getElementById('monthlyIncome').textContent = income.toLocaleString('th-TH', {minimumFractionDigits: 2});
             document.getElementById('monthlyExpense').textContent = expense.toLocaleString('th-TH', {minimumFractionDigits: 2});
-            document.getElementById('monthlyBalance').textContent = balance.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            document.getElementById('monthlyBalance').textContent = (income - expense).toLocaleString('th-TH', {minimumFractionDigits: 2});
         }
 
-        function generateCalendarGrid(year, month, transactions) {
+        function generateCalendarGrid(year, month, monthly) {
             const grid = document.getElementById('calendarGrid');
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            
             const transactionsByDate = {};
-            transactions.forEach(t => {
+            monthly.forEach(t => {
                 const date = new Date(t.date).getDate();
                 if (!transactionsByDate[date]) transactionsByDate[date] = { income: 0, expense: 0 };
-                if (t.type === 'income') transactionsByDate[date].income += parseFloat(t.amount);
-                else transactionsByDate[date].expense += parseFloat(t.amount);
+                if (t.type === 'income') transactionsByDate[date].income += t.amount;
+                else transactionsByDate[date].expense += t.amount;
             });
-
-            let html = '';
-            const dayHeaders = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-            dayHeaders.forEach(day => {
-                html += `<div class="p-3 text-center font-semibold text-slate-600 bg-slate-100 rounded-lg">${day}</div>`;
-            });
-
-            for (let i = 0; i < firstDay; i++) {
-                html += '<div class="p-2 h-28 bg-slate-50 rounded-lg opacity-50"></div>';
-            }
-
+            let html = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map(d => `<div class="p-3 text-center font-semibold text-slate-600 bg-slate-100 rounded-lg">${d}</div>`).join('');
+            for (let i = 0; i < firstDay; i++) html += '<div class="p-2 h-28 bg-slate-50 rounded-lg opacity-50"></div>';
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayData = transactionsByDate[day];
                 const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
-                html += `
-                    <div class="p-3 h-28 border-2 ${isToday ? 'bg-blue-50 border-blue-300' : 'bg-white/70 border-slate-200'} rounded-lg hover:bg-white transition-all transform hover:scale-105 pearl-shadow">
-                        <div class="font-semibold text-sm mb-2 ${isToday ? 'text-blue-600' : 'text-slate-700'}">${day}</div>
-                        ${dayData ? `
-                            <div class="text-xs space-y-1 overflow-hidden">
-                                ${dayData.income > 0 ? `<div class="text-emerald-600 font-medium truncate">+${dayData.income.toLocaleString('th-TH', {maximumFractionDigits: 0})}</div>` : ''}
-                                ${dayData.expense > 0 ? `<div class="text-rose-600 font-medium truncate">-${dayData.expense.toLocaleString('th-TH', {maximumFractionDigits: 0})}</div>` : ''}
-                            </div>` : ''}
-                    </div>`;
+                html += `<div class="p-3 h-28 border-2 ${isToday ? 'bg-blue-50 border-blue-300' : 'bg-white/70 border-slate-200'} rounded-lg">
+                    <div class="font-semibold text-sm mb-2 ${isToday ? 'text-blue-600' : 'text-slate-700'}">${day}</div>
+                    ${dayData ? `<div class="text-xs space-y-1 overflow-hidden">
+                        ${dayData.income > 0 ? `<div class="text-emerald-600 font-medium truncate">+${dayData.income.toLocaleString('th-TH')}</div>` : ''}
+                        ${dayData.expense > 0 ? `<div class="text-rose-600 font-medium truncate">-${dayData.expense.toLocaleString('th-TH')}</div>` : ''}
+                    </div>` : ''}
+                </div>`;
             }
             grid.innerHTML = html;
         }
 
         // --- UTILITY FUNCTIONS ---
         function isApiConfigured() {
-            return GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== 'YOUR_GOOGLE_SCRIPT_URL_HERE';
+            return GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('YOUR_GOOGLE_SCRIPT_URL_HERE');
         }
 
         function updateConnectionStatus(connected) {
             const status = document.getElementById('connectionStatus');
             const instructions = document.getElementById('setupInstructions');
-            
             if (connected) {
                 status.className = 'w-3 h-3 bg-green-400 rounded-full animate-pulse';
                 instructions.innerHTML = '<p class="text-green-600 font-medium">✅ เชื่อมต่อ Google Sheets สำเร็จ!</p>';
-            } else if (!isApiConfigured()) {
-                status.className = 'w-3 h-3 bg-red-400 rounded-full';
-                instructions.innerHTML = `<p class="text-amber-600 font-medium">⚠️ ยังไม่ได้ตั้งค่า Google Sheets</p><p class="mt-1">กรุณาแทนที่ <code class="bg-slate-200 px-1 rounded">YOUR_GOOGLE_SCRIPT_URL_HERE</code> ด้วย URL ของคุณ</p>`;
             } else {
                 status.className = 'w-3 h-3 bg-amber-400 rounded-full';
-                instructions.innerHTML = '<p class="text-amber-600 font-medium">⚠️ ไม่สามารถเชื่อมต่อ (ใช้งานแบบออฟไลน์)</p>';
+                instructions.querySelector('summary').textContent = '⚠️ ไม่สามารถเชื่อมต่อได้, กำลังใช้โหมดออฟไลน์ (คลิกเพื่อดูวิธีตั้งค่า)';
             }
         }
         
         function showSampleData() {
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            
-            transactions = [
-                { type: 'expense', amount: 350, category: 'อาหาร', payment_method: 'cash', description: 'อาหารเที่ยง', date: today.toISOString().split('T')[0], timestamp: today.toISOString(), id: Date.now() + 1 },
-                { type: 'income', amount: 15000, category: 'เงินเดือน', payment_method: 'transfer', description: 'เงินเดือนประจำเดือน', date: yesterday.toISOString().split('T')[0], timestamp: yesterday.toISOString(), id: Date.now() + 2 }
-            ];
+            transactions = [{id:"sample1", type:"income", amount:25000, category:"เงินเดือน", payment_method:"transfer", description:"เงินเดือน", date:new Date().toISOString().split('T')[0]}, {id:"sample2", type:"expense", amount:120, category:"อาหาร", payment_method:"cash", description:"ก๋วยเตี๋ยว", date:new Date().toISOString().split('T')[0]}];
             displayRecentTransactions();
         }
 
-        function setLoadingState(button, isLoading, defaultText = '', loadingText = '') {
-            const textSpan = button.querySelector('span:not(.hidden)');
-            const loadingSpan = button.querySelector('span.hidden');
-
+        function setLoadingState(button, isLoading) {
+            const textSpan = button.querySelector('span:not([id*="loading"])');
+            const loadingSpan = button.querySelector('span[id*="loading"]');
             if (isLoading) {
                 button.classList.add('loading');
-                if (textSpan) textSpan.classList.add('hidden');
-                if (loadingSpan) loadingSpan.classList.remove('hidden');
+                textSpan.classList.add('hidden');
+                loadingSpan.classList.remove('hidden');
             } else {
                 button.classList.remove('loading');
-                if (textSpan) textSpan.classList.remove('hidden');
-                if (loadingSpan) loadingSpan.classList.add('hidden');
+                textSpan.classList.remove('hidden');
+                loadingSpan.classList.add('hidden');
             }
         }
 
         function showNotification(message, type = 'success') {
             const notification = document.createElement('div');
-            const styles = {
-                success: 'bg-emerald-500 text-white',
-                error: 'bg-rose-500 text-white',
-                warning: 'bg-amber-500 text-white',
-                info: 'bg-blue-500 text-white'
-            };
-            notification.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg z-50 transform transition-all duration-300 translate-x-full ${styles[type] || styles.success}`;
+            const styles = { success: 'bg-emerald-500', error: 'bg-rose-500', warning: 'bg-amber-500', info: 'bg-blue-500' };
+            notification.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg z-50 text-white transform transition-all duration-300 translate-x-full ${styles[type]}`;
             notification.textContent = message;
             document.body.appendChild(notification);
-            
             setTimeout(() => notification.classList.remove('translate-x-full'), 100);
             setTimeout(() => {
                 notification.classList.add('translate-x-full');
                 setTimeout(() => document.body.removeChild(notification), 300);
             }, 3000);
+        }
+
+        function copyGoogleScript() {
+            const scriptCode = document.getElementById('googleScriptCode').textContent;
+            navigator.clipboard.writeText(scriptCode).then(() => {
+                showNotification('📋 คัดลอกโค้ดแล้ว!', 'info');
+            });
         }
     </script>
 </body>
