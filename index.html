@@ -21,8 +21,12 @@
             opacity: 0.6;
             pointer-events: none;
         }
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.5);
+        .delete-btn {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .transaction-item:hover .delete-btn {
+            opacity: 1;
         }
     </style>
 </head>
@@ -33,9 +37,15 @@
             <div class="pearl-gradient rounded-2xl p-8 pearl-shadow">
                 <h1 class="text-4xl font-bold text-slate-700 mb-2">💎 บันทึกรายรับรายจ่าย</h1>
                 <p class="text-slate-600">จัดการการเงินส่วนตัวของคุณอย่างมีประสิทธิภาพ</p>
-                <div class="mt-4 flex items-center justify-center space-x-2 text-sm text-slate-500">
-                    <span>🔗 เชื่อมต่อกับ Google Sheets</span>
-                    <div id="connectionStatus" class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                <div class="mt-4 flex flex-col items-center justify-center space-y-2 text-sm text-slate-500">
+                    <div class="flex items-center space-x-2">
+                        <span>🔗 เชื่อมต่อกับ Google Sheets</span>
+                        <div id="connectionStatus" class="w-3 h-3 bg-red-400 rounded-full"></div>
+                    </div>
+                    <div id="setupInstructions" class="text-xs text-center max-w-md">
+                        <p class="text-amber-600 font-medium">⚠️ ยังไม่ได้ตั้งค่า Google Sheets</p>
+                        <p class="mt-1">กรุณาแทนที่ <code class="bg-slate-200 px-1 rounded">YOUR_GOOGLE_SCRIPT_URL_HERE</code> ด้วย URL ของ Google Apps Script ที่คุณสร้าง</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -108,13 +118,18 @@
                 <h2 class="text-2xl font-semibold text-slate-700 mb-6 flex items-center">
                     <span class="mr-3">📋</span>รายการล่าสุด
                 </h2>
-                <div id="recentTransactions" class="space-y-4"></div>
+                <div id="recentTransactions" class="space-y-4">
+                    <div class="text-center py-8 text-slate-500">
+                        <div class="text-4xl mb-2">📊</div>
+                        <p>กำลังโหลดข้อมูล...</p>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Loan Section -->
         <div id="loanSection" class="hidden space-y-6">
-            <!-- Loan Summary Cards -->
+            <!-- Loan Summary -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                 <div class="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 rounded-xl p-6 text-center pearl-shadow">
                     <div class="text-3xl font-bold text-orange-600 mb-2" id="totalLoans">0</div>
@@ -130,16 +145,17 @@
                 </div>
                 <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-200 rounded-xl p-6 text-center pearl-shadow">
                     <div class="text-3xl font-bold text-yellow-600 mb-2" id="totalInterest">0</div>
-                    <div class="text-sm text-yellow-700 font-medium">� ดอกเบี้ยรวม</div>
+                    <div class="text-sm text-yellow-700 font-medium">📈 ดอกเบี้ยรวม</div>
                 </div>
             </div>
+
             <!-- Add Loan Form -->
             <div class="pearl-gradient rounded-2xl pearl-shadow p-8">
                 <h2 class="text-2xl font-semibold text-slate-700 mb-6 flex items-center">
                     <span class="mr-3">💳</span>เพิ่มสินเชื่อใหม่
                 </h2>
                 <form id="loanForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div>
+                    <div>
                         <label class="block text-sm font-medium text-slate-700 mb-3">ประเภทสินเชื่อ</label>
                         <select id="loanType" class="w-full p-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-transparent bg-white/80 backdrop-blur-sm transition-all" required>
                             <option value="personal">🏦 สินเชื่อส่วนบุคคล</option>
@@ -181,15 +197,21 @@
                     </div>
                 </form>
             </div>
+
             <!-- Loan List -->
             <div class="pearl-gradient rounded-2xl pearl-shadow p-8">
                 <h2 class="text-2xl font-semibold text-slate-700 mb-6 flex items-center">
                     <span class="mr-3">📋</span>รายการสินเชื่อ
                 </h2>
-                <div id="loanList" class="space-y-4"></div>
+                <div id="loanList" class="space-y-4">
+                    <div class="text-center py-8 text-slate-500">
+                        <div class="text-4xl mb-2">💳</div>
+                        <p>ยังไม่มีสินเชื่อ เริ่มเพิ่มสินเชื่อแรกของคุณเลย!</p>
+                    </div>
+                </div>
             </div>
         </div>
-        
+
         <!-- Calendar Section -->
         <div id="calendarSection" class="hidden">
             <div class="pearl-gradient rounded-2xl pearl-shadow p-8">
@@ -234,270 +256,100 @@
         </div>
     </div>
 
-    <!-- Modals -->
-    <div id="editTransactionModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg pearl-gradient">
-            <h2 class="text-2xl font-semibold text-slate-700 mb-6">✏️ แก้ไขรายการ</h2>
-            <form id="editTransactionForm">
-                <input type="hidden" id="editTransactionId">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">ประเภทรายการ</label>
-                        <select id="editType" class="w-full p-3 border-2 border-slate-200 rounded-xl">
-                            <option value="income">💰 รายรับ</option>
-                            <option value="expense">💸 รายจ่าย</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">จำนวนเงิน</label>
-                        <input type="number" id="editAmount" class="w-full p-3 border-2 border-slate-200 rounded-xl" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">หมวดหมู่</label>
-                        <input type="text" id="editCategory" class="w-full p-3 border-2 border-slate-200 rounded-xl" required>
-                    </div>
-                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">วิธีการชำระ</label>
-                        <select id="editPaymentMethod" class="w-full p-3 border-2 border-slate-200 rounded-xl">
-                            <option value="cash">💵 เงินสด</option>
-                            <option value="credit_card">💳 บัตรเครดิต</option>
-                            <option value="transfer">🏦 เงินโอน</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-slate-700 mb-2">รายละเอียด</label>
-                        <input type="text" id="editDescription" class="w-full p-3 border-2 border-slate-200 rounded-xl">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">วันที่</label>
-                        <input type="date" id="editDate" class="w-full p-3 border-2 border-slate-200 rounded-xl" required>
-                    </div>
-                </div>
-                <div class="mt-8 flex justify-end space-x-4">
-                    <button type="button" onclick="closeModal('editTransactionModal')" class="px-6 py-3 rounded-xl bg-slate-200 text-slate-700 font-medium hover:bg-slate-300 transition">ยกเลิก</button>
-                    <button type="submit" class="px-6 py-3 rounded-xl bg-slate-600 text-white font-medium hover:bg-slate-700 transition">บันทึกการเปลี่ยนแปลง</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <div id="editLoanModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg pearl-gradient">
-            <h2 class="text-2xl font-semibold text-slate-700 mb-6">✏️ แก้ไขสินเชื่อ</h2>
-            <form id="editLoanForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <input type="hidden" id="editLoanId">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">ชื่อสินเชื่อ</label>
-                    <input type="text" id="editLoanName" class="w-full p-3 border-2 border-slate-200 rounded-xl" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">ประเภทสินเชื่อ</label>
-                    <select id="editLoanType" class="w-full p-3 border-2 border-slate-200 rounded-xl">
-                        <option value="personal">🏦 สินเชื่อส่วนบุคคล</option>
-                        <option value="home">🏠 สินเชื่อบ้าน</option>
-                        <option value="car">🚗 สินเชื่อรถยนต์</option>
-                        <option value="credit_card">💳 บัตรเครดิต</option>
-                        <option value="other">📋 อื่นๆ</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">จำนวนเงินกู้</label>
-                    <input type="number" id="editLoanAmount" step="0.01" class="w-full p-3 border-2 border-slate-200 rounded-xl" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">อัตราดอกเบี้ย (% ต่อปี)</label>
-                    <input type="number" id="editInterestRate" step="0.01" class="w-full p-3 border-2 border-slate-200 rounded-xl" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">ระยะเวลาผ่อน (เดือน)</label>
-                    <input type="number" id="editLoanTerm" class="w-full p-3 border-2 border-slate-200 rounded-xl" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">วันที่เริ่มผ่อน</label>
-                    <input type="date" id="editLoanStartDate" class="w-full p-3 border-2 border-slate-200 rounded-xl" required>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">หมายเหตุ</label>
-                    <input type="text" id="editLoanNote" class="w-full p-3 border-2 border-slate-200 rounded-xl">
-                </div>
-                <div class="md:col-span-2 mt-4 flex justify-end space-x-4">
-                    <button type="button" onclick="closeModal('editLoanModal')" class="px-6 py-3 rounded-xl bg-slate-200 text-slate-700 font-medium hover:bg-slate-300 transition">ยกเลิก</button>
-                    <button type="submit" class="px-6 py-3 rounded-xl bg-slate-600 text-white font-medium hover:bg-slate-700 transition">บันทึกการเปลี่ยนแปลง</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center pearl-gradient">
-            <h2 class="text-2xl font-semibold text-slate-700 mb-4">🗑️ ยืนยันการลบ</h2>
-            <p class="text-slate-600 mb-8">คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
-            <div class="flex justify-center space-x-4">
-                <button id="cancelDelete" class="px-8 py-3 rounded-xl bg-slate-200 text-slate-700 font-medium hover:bg-slate-300 transition">ยกเลิก</button>
-                <button id="confirmDelete" class="px-8 py-3 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition">ยืนยัน</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // --- CONFIG & STATE ---
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwgdS9mBc6u5XJB9Mb9UZWpRBe2rWeu1l2ZNQbYz2_N7w0iMu82nxQCldonHT0B4IO/exec';
+        // --- CONFIGURATION ---
+        // Google Apps Script Web App URL - ใส่ URL ของคุณที่นี่
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwgdS9mBc6u5XJB9Mb9UZWpRBe2rWeu1l2ZNQbYz2_N7w0iMu82nxQCldonHT0B4IO/exec'; 
+
+        // --- GLOBAL STATE ---
         let currentDate = new Date();
         let transactions = [];
         let loans = [];
 
         // --- INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', initializeApp);
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
 
         async function initializeApp() {
-            setupEventListeners();
+            // Set today's date as default
             document.getElementById('date').valueAsDate = new Date();
             document.getElementById('loanStartDate').valueAsDate = new Date();
-            await Promise.all([loadTransactions(), loadLoans()]);
-            updateAllUI();
-        }
-
-        function setupEventListeners() {
-            document.getElementById('recordTab').addEventListener('click', () => switchTab('record'));
-            document.getElementById('calendarTab').addEventListener('click', () => switchTab('calendar'));
-            document.getElementById('loanTab').addEventListener('click', () => switchTab('loan'));
             
-            document.getElementById('transactionForm').addEventListener('submit', handleAddTransactionSubmit);
-            document.getElementById('editTransactionForm').addEventListener('submit', handleEditTransactionSubmit);
-            document.getElementById('loanForm').addEventListener('submit', handleAddLoanSubmit);
-            document.getElementById('editLoanForm').addEventListener('submit', handleEditLoanSubmit);
-
-            document.getElementById('prevMonth').addEventListener('click', () => navigateMonth(-1));
-            document.getElementById('nextMonth').addEventListener('click', () => navigateMonth(1));
-
-            document.getElementById('cancelDelete').addEventListener('click', () => closeModal('confirmModal'));
-        }
-
-        // --- UI & DISPLAY ---
-
-        function updateAllUI() {
-            displayRecentTransactions();
-            displayLoans();
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Load initial data
+            await loadTransactions();
+            await loadLoans();
             updateCalendar();
             updateLoanSummary();
         }
 
-        function switchTab(tab) {
-            ['record', 'calendar', 'loan'].forEach(t => {
-                document.getElementById(`${t}Tab`).className = 'px-8 py-4 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-800 hover:bg-white/50';
-                document.getElementById(`${t}Section`).classList.add('hidden');
+        function setupEventListeners() {
+            // Tab switching
+            document.getElementById('recordTab').addEventListener('click', () => switchTab('record'));
+            document.getElementById('calendarTab').addEventListener('click', () => switchTab('calendar'));
+            document.getElementById('loanTab').addEventListener('click', () => switchTab('loan'));
+            
+            // Form submission
+            document.getElementById('transactionForm').addEventListener('submit', handleTransactionSubmit);
+            document.getElementById('loanForm').addEventListener('submit', handleLoanSubmit);
+            
+            // Calendar navigation
+            document.getElementById('prevMonth').addEventListener('click', () => navigateMonth(-1));
+            document.getElementById('nextMonth').addEventListener('click', () => navigateMonth(1));
+
+            // Dynamic event listeners for delete buttons
+            document.getElementById('recentTransactions').addEventListener('click', (e) => {
+                if (e.target.closest('.delete-transaction-btn')) {
+                    const button = e.target.closest('.delete-transaction-btn');
+                    const transactionId = button.dataset.id;
+                    handleDeleteTransaction(transactionId);
+                }
             });
-            document.getElementById(`${tab}Tab`).className = 'px-8 py-4 rounded-lg font-medium transition-all bg-slate-600 text-white shadow-lg';
-            document.getElementById(`${tab}Section`).classList.remove('hidden');
-            if (tab === 'calendar') updateCalendar();
+
+            document.getElementById('loanList').addEventListener('click', (e) => {
+                if (e.target.closest('.delete-loan-btn')) {
+                    const button = e.target.closest('.delete-loan-btn');
+                    const loanId = button.dataset.id;
+                    handleDeleteLoan(loanId);
+                }
+            });
         }
 
-        function displayRecentTransactions() {
-            const container = document.getElementById('recentTransactions');
-            if (transactions.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-500"><div class="text-4xl mb-2">📝</div><p>ยังไม่มีรายการ</p></div>`;
-                return;
-            }
-            container.innerHTML = transactions.slice(0, 10).map(t => {
-                const isIncome = t.type === 'income';
-                return `
-                    <div class="flex justify-between items-center p-4 bg-white/60 rounded-xl pearl-shadow">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-3 mb-1">
-                                <span class="text-2xl">${isIncome ? '💰' : '💸'}</span>
-                                <span class="font-semibold text-slate-700">${t.category}</span>
-                            </div>
-                            <div class="text-sm text-slate-600 ml-9">${t.description} • ${new Date(t.date).toLocaleDateString('th-TH')}</div>
-                        </div>
-                        <div class="text-right mr-4">
-                            <div class="font-bold text-lg ${isIncome ? 'text-emerald-600' : 'text-rose-600'}">
-                                ${isIncome ? '+' : '-'}${t.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿
-                            </div>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button onclick="openEditModal('transaction', '${t.id}')" class="p-2 rounded-full hover:bg-slate-200 transition">✏️</button>
-                            <button onclick="confirmDeleteItem('transaction', '${t.id}')" class="p-2 rounded-full hover:bg-slate-200 transition">🗑️</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-        
-        function displayLoans() {
-            const container = document.getElementById('loanList');
-            if (loans.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-500"><div class="text-4xl mb-2">💳</div><p>ยังไม่มีสินเชื่อ</p></div>`;
-                return;
-            }
-            container.innerHTML = loans.map(loan => {
-                const typeIcons = {'personal': '🏦','home': '🏠','car': '🚗','credit_card': '💳','other': '📋'};
-                return `
-                <div class="bg-white/60 p-6 rounded-xl pearl-shadow space-y-4">
-                    <div class="flex justify-between items-start">
-                        <div class="flex items-center space-x-4">
-                           <span class="text-3xl">${typeIcons[loan.type] || '📋'}</span>
-                           <div>
-                                <h3 class="font-semibold text-slate-700 text-lg">${loan.name}</h3>
-                                <p class="text-sm text-slate-600">${loan.note}</p>
-                           </div>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button onclick="openEditModal('loan', '${loan.id}')" class="p-2 rounded-full hover:bg-slate-200 transition">✏️</button>
-                            <button onclick="confirmDeleteItem('loan', '${loan.id}')" class="p-2 rounded-full hover:bg-slate-200 transition">🗑️</button>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div><div class="font-bold text-orange-600">${loan.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div><div class="text-xs">เงินกู้</div></div>
-                        <div><div class="font-bold text-red-600">${(loan.monthlyPayment || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</div><div class="text-xs">ผ่อน/เดือน</div></div>
-                        <div><div class="font-bold text-blue-600">${loan.interestRate}%</div><div class="text-xs">ดอกเบี้ย</div></div>
-                        <div><div class="font-bold text-purple-600">${loan.term}</div><div class="text-xs">เดือน</div></div>
-                    </div>
-                </div>
-            `}).join('');
-        }
-
-        // --- MODALS ---
-        function openModal(modalId) { document.getElementById(modalId).classList.replace('hidden', 'flex'); }
-        function closeModal(modalId) { document.getElementById(modalId).classList.replace('flex', 'hidden'); }
-
-        function openEditModal(type, id) {
-            if (type === 'transaction') {
-                const transaction = transactions.find(t => t.id == id);
-                if (!transaction) return;
-                document.getElementById('editTransactionId').value = transaction.id;
-                document.getElementById('editType').value = transaction.type;
-                document.getElementById('editAmount').value = transaction.amount;
-                document.getElementById('editCategory').value = transaction.category;
-                document.getElementById('editPaymentMethod').value = transaction.payment_method;
-                document.getElementById('editDescription').value = transaction.description;
-                document.getElementById('editDate').value = transaction.date;
-                openModal('editTransactionModal');
-            } else if (type === 'loan') {
-                const loan = loans.find(l => l.id == id);
-                if (!loan) return;
-                document.getElementById('editLoanId').value = loan.id;
-                document.getElementById('editLoanName').value = loan.name;
-                document.getElementById('editLoanType').value = loan.type;
-                document.getElementById('editLoanAmount').value = loan.amount;
-                document.getElementById('editInterestRate').value = loan.interestRate;
-                document.getElementById('editLoanTerm').value = loan.term;
-                document.getElementById('editLoanStartDate').value = loan.startDate;
-                document.getElementById('editLoanNote').value = loan.note;
-                openModal('editLoanModal');
-            }
-        }
-
-        function confirmDeleteItem(type, id) {
-            openModal('confirmModal');
-            document.getElementById('confirmDelete').onclick = () => {
-                deleteItem(type, id);
-                closeModal('confirmModal');
+        // --- UI & TAB MANAGEMENT ---
+        function switchTab(tab) {
+            const tabs = {
+                record: { btn: document.getElementById('recordTab'), section: document.getElementById('recordSection') },
+                calendar: { btn: document.getElementById('calendarTab'), section: document.getElementById('calendarSection') },
+                loan: { btn: document.getElementById('loanTab'), section: document.getElementById('loanSection') }
             };
+
+            // Reset all tabs and hide all sections
+            Object.values(tabs).forEach(item => {
+                item.btn.className = 'px-8 py-4 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-800 hover:bg-white/50';
+                item.section.classList.add('hidden');
+            });
+
+            // Activate the selected tab
+            tabs[tab].btn.className = 'px-8 py-4 rounded-lg font-medium transition-all bg-slate-600 text-white shadow-lg';
+            tabs[tab].section.classList.remove('hidden');
+
+            // Update data if needed
+            if (tab === 'calendar') updateCalendar();
+            if (tab === 'loan') {
+                displayLoans();
+                updateLoanSummary();
+            }
         }
 
-        // --- DATA HANDLERS ---
-        async function handleAddTransactionSubmit(e) {
+        // --- API & DATA HANDLING (TRANSACTIONS) ---
+        async function handleTransactionSubmit(e) {
             e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            setLoadingState(submitBtn, true);
+
             const formData = {
                 type: document.getElementById('type').value,
                 amount: parseFloat(document.getElementById('amount').value),
@@ -506,46 +358,111 @@
                 description: document.getElementById('description').value || '-',
                 date: document.getElementById('date').value,
                 timestamp: new Date().toISOString(),
-                id: Date.now()
+                id: Date.now().toString() // Ensure ID is a string
             };
+
+            // Optimistic UI update
             transactions.unshift(formData);
-            updateAllUI();
-            e.target.reset();
+            displayRecentTransactions();
+            updateCalendar();
+            document.getElementById('transactionForm').reset();
             document.getElementById('date').valueAsDate = new Date();
+
             try {
-                await apiCall('addTransaction', formData);
-                showNotification('บันทึกรายการเรียบร้อยแล้ว!', 'success');
+                if (isApiConfigured()) {
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        // **FIXED**: Wrap data in a 'data' object as expected by GAS
+                        body: JSON.stringify({ action: 'addTransaction', data: formData })
+                    });
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.error || 'Unknown error');
+                    
+                    console.log('✅ บันทึกข้อมูลไป Google Sheets สำเร็จ');
+                    showNotification('✅ บันทึกรายการเรียบร้อยแล้ว!', 'success');
+                    updateConnectionStatus(true);
+                } else {
+                    showNotification('✅ บันทึกรายการ (โหมดออฟไลน์)', 'info');
+                    updateConnectionStatus(false);
+                }
             } catch (error) {
-                showNotification('บันทึกออฟไลน์สำเร็จ (เชื่อมต่อล้มเหลว)', 'error');
+                console.error('Error connecting to Google Sheets:', error);
+                showNotification('⚠️ บันทึกรายการ (ออฟไลน์), เชื่อมต่อไม่สำเร็จ', 'warning');
+                updateConnectionStatus(false);
+            } finally {
+                setLoadingState(submitBtn, false, '✅ บันทึกรายการ', '⏳ กำลังบันทึก...');
             }
         }
 
-        async function handleEditTransactionSubmit(e) {
-            e.preventDefault();
-            const id = document.getElementById('editTransactionId').value;
-            const updatedData = {
-                id: id,
-                type: document.getElementById('editType').value,
-                amount: parseFloat(document.getElementById('editAmount').value),
-                category: document.getElementById('editCategory').value,
-                payment_method: document.getElementById('editPaymentMethod').value,
-                description: document.getElementById('editDescription').value,
-                date: document.getElementById('editDate').value,
-            };
-            const index = transactions.findIndex(t => t.id == id);
-            if (index !== -1) transactions[index] = { ...transactions[index], ...updatedData };
-            updateAllUI();
-            closeModal('editTransactionModal');
+        async function handleDeleteTransaction(transactionId) {
+            if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?')) return;
+
+            // Optimistic UI update
+            const originalTransactions = [...transactions];
+            transactions = transactions.filter(t => t.id != transactionId);
+            displayRecentTransactions();
+            updateCalendar();
+            showNotification('🗑️ ลบรายการแล้ว', 'info');
+
             try {
-                await apiCall('editTransaction', updatedData);
-                showNotification('แก้ไขรายการสำเร็จ!', 'success');
+                if (isApiConfigured()) {
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        // **NEW**: Send delete request
+                        body: JSON.stringify({ action: 'deleteTransaction', data: { id: transactionId } })
+                    });
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.error || 'Unknown error');
+                    console.log('✅ ลบข้อมูลจาก Google Sheets สำเร็จ');
+                }
             } catch (error) {
-                showNotification('แก้ไขไม่สำเร็จ (เชื่อมต่อล้มเหลว)', 'error');
+                console.error('Error deleting from Google Sheets:', error);
+                showNotification('⚠️ ไม่สามารถลบจาก Google Sheets ได้', 'error');
+                // Revert UI if API call fails
+                transactions = originalTransactions;
+                displayRecentTransactions();
+                updateCalendar();
             }
         }
 
-        async function handleAddLoanSubmit(e) {
+        async function loadTransactions() {
+            if (!isApiConfigured()) {
+                console.log('Google Script URL not configured, using offline mode');
+                updateConnectionStatus(false);
+                showSampleData();
+                showNotification('🔧 กรุณาตั้งค่า Google Script URL ก่อนใช้งาน', 'info');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getTransactions&timestamp=${Date.now()}`);
+                const data = await response.json();
+                if (data.success) {
+                    transactions = data.data || [];
+                    displayRecentTransactions();
+                    updateConnectionStatus(true);
+                    showNotification('✅ เชื่อมต่อ Google Sheets สำเร็จ!', 'success');
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                updateConnectionStatus(false);
+                showSampleData();
+                showNotification('⚠️ ไม่สามารถเชื่อมต่อ Google Sheets ได้, กำลังใช้โหมดออฟไลน์', 'warning');
+            }
+        }
+
+        // --- API & DATA HANDLING (LOANS) ---
+        async function handleLoanSubmit(e) {
             e.preventDefault();
+            const submitBtn = document.getElementById('loanSubmitBtn');
+            setLoadingState(submitBtn, true);
+
             const loanData = {
                 type: document.getElementById('loanType').value,
                 name: document.getElementById('loanName').value,
@@ -555,187 +472,324 @@
                 startDate: document.getElementById('loanStartDate').value,
                 note: document.getElementById('loanNote').value || '-',
                 timestamp: new Date().toISOString(),
-                id: Date.now()
+                id: Date.now().toString() // Ensure ID is a string
             };
-            loanData.monthlyPayment = calculateMonthlyPayment(loanData);
+
+            const monthlyRate = loanData.interestRate / 100 / 12;
+            loanData.monthlyPayment = monthlyRate === 0
+                ? loanData.amount / loanData.term
+                : loanData.amount * (monthlyRate * Math.pow(1 + monthlyRate, loanData.term)) / (Math.pow(1 + monthlyRate, loanData.term) - 1);
+
+            // Optimistic UI update
             loans.push(loanData);
-            updateAllUI();
-            e.target.reset();
+            displayLoans();
+            updateLoanSummary();
+            document.getElementById('loanForm').reset();
             document.getElementById('loanStartDate').valueAsDate = new Date();
+
             try {
-                await apiCall('addLoan', loanData);
-                showNotification('เพิ่มสินเชื่อสำเร็จ!', 'success');
+                if (isApiConfigured()) {
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'cors',
+                        headers: { 'Content-Type': 'application/json' },
+                         // **FIXED**: Wrap data in a 'data' object as expected by GAS
+                        body: JSON.stringify({ action: 'addLoan', data: loanData })
+                    });
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.error || 'Unknown error');
+                    console.log('✅ บันทึกข้อมูลสินเชื่อไป Google Sheets สำเร็จ');
+                    showNotification('💳 เพิ่มสินเชื่อเรียบร้อยแล้ว!', 'success');
+                } else {
+                     showNotification('💳 เพิ่มสินเชื่อ (โหมดออฟไลน์)', 'info');
+                }
             } catch (error) {
-                showNotification('เพิ่มสินเชื่อออฟไลน์ (เชื่อมต่อล้มเหลว)', 'error');
+                console.error('Error saving loan to Google Sheets:', error);
+                showNotification('⚠️ บันทึกสินเชื่อ (ออฟไลน์), เชื่อมต่อไม่สำเร็จ', 'warning');
+            } finally {
+                setLoadingState(submitBtn, false, '✅ เพิ่มสินเชื่อ', '⏳ กำลังบันทึก...');
+            }
+        }
+        
+        async function handleDeleteLoan(loanId) {
+             if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบสินเชื่อนี้?')) return;
+
+            // Optimistic UI update
+            const originalLoans = [...loans];
+            loans = loans.filter(l => l.id != loanId);
+            displayLoans();
+            updateLoanSummary();
+            showNotification('🗑️ ลบสินเชื่อแล้ว', 'info');
+
+            try {
+                if (isApiConfigured()) {
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        // **NEW**: Send delete request
+                        body: JSON.stringify({ action: 'deleteLoan', data: { id: loanId } })
+                    });
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.error || 'Unknown error');
+                    console.log('✅ ลบสินเชื่อจาก Google Sheets สำเร็จ');
+                }
+            } catch (error) {
+                console.error('Error deleting loan from Google Sheets:', error);
+                showNotification('⚠️ ไม่สามารถลบสินเชื่อจาก Google Sheets ได้', 'error');
+                // Revert UI if API call fails
+                loans = originalLoans;
+                displayLoans();
+                updateLoanSummary();
             }
         }
 
-        async function handleEditLoanSubmit(e) {
-            e.preventDefault();
-            const id = document.getElementById('editLoanId').value;
-            const updatedData = {
-                id: id,
-                name: document.getElementById('editLoanName').value,
-                type: document.getElementById('editLoanType').value,
-                amount: parseFloat(document.getElementById('editLoanAmount').value),
-                interestRate: parseFloat(document.getElementById('editInterestRate').value),
-                term: parseInt(document.getElementById('editLoanTerm').value),
-                startDate: document.getElementById('editLoanStartDate').value,
-                note: document.getElementById('editLoanNote').value,
-            };
-            updatedData.monthlyPayment = calculateMonthlyPayment(updatedData);
-            const index = loans.findIndex(l => l.id == id);
-            if (index !== -1) loans[index] = { ...loans[index], ...updatedData };
-            updateAllUI();
-            closeModal('editLoanModal');
-            try {
-                await apiCall('editLoan', updatedData);
-                showNotification('แก้ไขสินเชื่อสำเร็จ!', 'success');
-            } catch (error) {
-                showNotification('แก้ไขไม่สำเร็จ (เชื่อมต่อล้มเหลว)', 'error');
+
+        async function loadLoans() {
+            if (!isApiConfigured()) {
+                loans = [];
+                displayLoans();
+                updateLoanSummary();
+                return;
             }
-        }
-        
-        async function deleteItem(type, id) {
-            const action = type === 'transaction' ? 'deleteTransaction' : 'deleteLoan';
-            if (type === 'transaction') transactions = transactions.filter(t => t.id != id);
-            if (type === 'loan') loans = loans.filter(l => l.id != id);
-            updateAllUI();
             try {
-                await apiCall(action, { id });
-                showNotification('ลบรายการสำเร็จ!', 'success');
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLoans&timestamp=${Date.now()}`);
+                const data = await response.json();
+                if (data.success) {
+                    loans = data.data || [];
+                    displayLoans();
+                    updateLoanSummary();
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
             } catch (error) {
-                showNotification('ลบไม่สำเร็จ (เชื่อมต่อล้มเหลว)', 'error');
-                if (type === 'transaction') loadTransactions();
-                if (type === 'loan') loadLoans();
+                console.error('Error loading loans:', error);
+                loans = [];
+                displayLoans();
+                updateLoanSummary();
             }
         }
 
-        // --- API & DATA LOADING ---
-        async function apiCall(action, data) {
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action, data })
-                });
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const result = await response.json();
-                if (!result.success) throw new Error(result.error || 'Unknown server error');
-                updateConnectionStatus(true);
-            } catch (error) {
-                console.error(`API call failed for action: ${action}`, error);
-                updateConnectionStatus(false);
-                throw error;
+        // --- DISPLAY & RENDER FUNCTIONS ---
+        function displayRecentTransactions() {
+            const container = document.getElementById('recentTransactions');
+            if (transactions.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-500"><div class="text-4xl mb-2">📝</div><p>ยังไม่มีรายการ เริ่มบันทึกรายการแรกของคุณเลย!</p></div>`;
+                return;
             }
+            const recentTransactions = transactions.slice(0, 10);
+            container.innerHTML = recentTransactions.map(transaction => {
+                const isIncome = transaction.type === 'income';
+                const paymentIcon = { 'cash': '💵', 'credit_card': '💳', 'transfer': '🏦' };
+                return `
+                    <div class="transaction-item flex justify-between items-center p-5 bg-white/60 backdrop-blur-sm border border-slate-200 rounded-xl hover:bg-white/80 transition-all transform hover:scale-[1.02] pearl-shadow">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="text-2xl">${isIncome ? '💰' : '💸'}</span>
+                                <span class="font-semibold text-slate-700">${transaction.category}</span>
+                                <span class="text-lg">${paymentIcon[transaction.payment_method] || ''}</span>
+                            </div>
+                            <div class="text-sm text-slate-600 ml-8">
+                                ${transaction.description} • ${new Date(transaction.date).toLocaleDateString('th-TH')}
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <div class="font-bold text-lg ${isIncome ? 'text-emerald-600' : 'text-rose-600'}">
+                                    ${isIncome ? '+' : '-'}${transaction.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿
+                                </div>
+                            </div>
+                            <button class="delete-transaction-btn delete-btn text-rose-500 hover:text-rose-700 p-2 rounded-full hover:bg-rose-100 transition-all" data-id="${transaction.id}" title="ลบรายการนี้">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </button>
+                        </div>
+                    </div>`;
+            }).join('');
         }
 
-        async function loadData(action) {
-            try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=${action}&t=${Date.now()}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const result = await response.json();
-                if (!result.success) throw new Error(result.error);
-                updateConnectionStatus(true);
-                return result.data || [];
-            } catch (error) {
-                console.error(`Error loading ${action}:`, error);
-                updateConnectionStatus(false);
-                return [];
+        function displayLoans() {
+            const container = document.getElementById('loanList');
+            if (loans.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-500"><div class="text-4xl mb-2">💳</div><p>ยังไม่มีสินเชื่อ เริ่มเพิ่มสินเชื่อแรกของคุณเลย!</p></div>`;
+                return;
             }
-        }
-        async function loadTransactions() { transactions = await loadData('getTransactions'); }
-        async function loadLoans() { loans = await loadData('getLoans'); }
-        
-        // --- UTILITIES ---
-        function calculateMonthlyPayment(loan) {
-            const monthlyRate = loan.interestRate / 100 / 12;
-            if (monthlyRate === 0) return loan.amount / loan.term;
-            return loan.amount * (monthlyRate * Math.pow(1 + monthlyRate, loan.term)) / (Math.pow(1 + monthlyRate, loan.term) - 1);
-        }
-        
-        function updateConnectionStatus(connected) {
-            const status = document.getElementById('connectionStatus');
-            status.className = `w-3 h-3 rounded-full ${connected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`;
-        }
-        
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg z-50 transform transition-all duration-300 translate-x-full ${
-                type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
-            }`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.classList.remove('translate-x-full'), 100);
-            setTimeout(() => {
-                notification.classList.add('translate-x-full');
-                setTimeout(() => document.body.removeChild(notification), 300);
-            }, 3000);
-        }
-        
-        function navigateMonth(direction) { currentDate.setMonth(currentDate.getMonth() + direction); updateCalendar(); }
-        
-        function updateCalendar() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            document.getElementById('currentMonth').textContent = new Date(year, month).toLocaleDateString('th-TH', { year: 'numeric', month: 'long' });
-            const monthlyTransactions = transactions.filter(t => {
-                const transactionDate = new Date(t.date);
-                return transactionDate.getFullYear() === year && transactionDate.getMonth() === month;
-            });
-            updateMonthlySummary(monthlyTransactions);
-            generateCalendarGrid(year, month, monthlyTransactions);
-        }
-
-        function updateMonthlySummary(transactions) {
-            const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-            const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-            document.getElementById('monthlyIncome').textContent = income.toLocaleString('th-TH', {minimumFractionDigits: 2});
-            document.getElementById('monthlyExpense').textContent = expense.toLocaleString('th-TH', {minimumFractionDigits: 2});
-            document.getElementById('monthlyBalance').textContent = (income - expense).toLocaleString('th-TH', {minimumFractionDigits: 2});
-        }
-
-        function generateCalendarGrid(year, month, transactions) {
-            const grid = document.getElementById('calendarGrid');
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const transactionsByDate = {};
-            transactions.forEach(t => {
-                const date = new Date(t.date).getDate();
-                if (!transactionsByDate[date]) transactionsByDate[date] = { income: 0, expense: 0 };
-                if (t.type === 'income') transactionsByDate[date].income += t.amount;
-                else transactionsByDate[date].expense += t.amount;
-            });
-            let html = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map(day => `<div class="p-3 text-center font-semibold text-slate-600 bg-slate-100 rounded-lg">${day}</div>`).join('');
-            for (let i = 0; i < firstDay; i++) html += '<div class="p-2 h-28 bg-slate-50 rounded-lg opacity-50"></div>';
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayData = transactionsByDate[day];
-                const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
-                html += `<div class="p-3 h-28 border-2 ${isToday ? 'bg-blue-50 border-blue-300' : 'bg-white/70 border-slate-200'} rounded-lg hover:bg-white transition-all transform hover:scale-105 pearl-shadow">
-                    <div class="font-semibold text-sm mb-2 ${isToday ? 'text-blue-600' : 'text-slate-700'}">${day}</div>
-                    ${dayData ? `<div class="text-xs space-y-1">
-                        ${dayData.income > 0 ? `<div class="text-emerald-600 font-medium">+${dayData.income.toLocaleString('th-TH', {maximumFractionDigits: 0})}</div>` : ''}
-                        ${dayData.expense > 0 ? `<div class="text-rose-600 font-medium">-${dayData.expense.toLocaleString('th-TH', {maximumFractionDigits: 0})}</div>` : ''}
-                    </div>` : ''}
-                </div>`;
-            }
-            grid.innerHTML = html;
+            container.innerHTML = loans.map(loan => {
+                const typeIcons = { 'personal': '🏦', 'home': '🏠', 'car': '🚗', 'credit_card': '💳', 'other': '📋' };
+                const totalInterest = (loan.monthlyPayment * loan.term) - loan.amount;
+                return `
+                    <div class="transaction-item bg-white/60 backdrop-blur-sm border border-slate-200 rounded-xl p-6 hover:bg-white/80 transition-all transform hover:scale-[1.02] pearl-shadow relative">
+                         <button class="delete-loan-btn delete-btn absolute top-4 right-4 text-rose-500 hover:text-rose-700 p-2 rounded-full hover:bg-rose-100 transition-all" data-id="${loan.id}" title="ลบสินเชื่อนี้">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                        <div class="flex items-center space-x-3 mb-4">
+                            <span class="text-3xl">${typeIcons[loan.type]}</span>
+                            <div>
+                                <h3 class="font-semibold text-slate-700 text-lg">${loan.name}</h3>
+                                <p class="text-sm text-slate-600">${loan.note}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                            <div class="text-center"><div class="text-lg font-bold text-orange-600">${loan.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div><div class="text-xs text-slate-600">เงินกู้</div></div>
+                            <div class="text-center"><div class="text-lg font-bold text-red-600">${loan.monthlyPayment.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div><div class="text-xs text-slate-600">ผ่อน/เดือน</div></div>
+                            <div class="text-center"><div class="text-lg font-bold text-blue-600">${loan.interestRate}%</div><div class="text-xs text-slate-600">ดอกเบี้ย</div></div>
+                            <div class="text-center"><div class="text-lg font-bold text-purple-600">${loan.term}</div><div class="text-xs text-slate-600">ระยะเวลา(เดือน)</div></div>
+                        </div>
+                        <div class="flex justify-between text-sm text-slate-600">
+                            <span>เริ่มผ่อน: ${new Date(loan.startDate).toLocaleDateString('th-TH')}</span>
+                            <span>ดอกเบี้ยรวม: ${totalInterest.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿</span>
+                        </div>
+                    </div>`;
+            }).join('');
         }
 
         function updateLoanSummary() {
             const totalLoansCount = loans.length;
             const totalDebt = loans.reduce((sum, loan) => sum + loan.amount, 0);
             const monthlyPaymentSum = loans.reduce((sum, loan) => sum + (loan.monthlyPayment || 0), 0);
-            const totalInterest = loans.reduce((sum, loan) => {
-                const interest = ((loan.monthlyPayment * loan.term) - loan.amount);
-                return sum + (interest > 0 ? interest : 0);
-            }, 0);
+            const totalInterest = loans.reduce((sum, loan) => sum + ((loan.monthlyPayment * loan.term) - loan.amount), 0);
+
             document.getElementById('totalLoans').textContent = totalLoansCount;
             document.getElementById('totalDebt').textContent = totalDebt.toLocaleString('th-TH', {minimumFractionDigits: 2});
             document.getElementById('monthlyPayment').textContent = monthlyPaymentSum.toLocaleString('th-TH', {minimumFractionDigits: 2});
             document.getElementById('totalInterest').textContent = totalInterest.toLocaleString('th-TH', {minimumFractionDigits: 2});
         }
+
+        // --- CALENDAR FUNCTIONS ---
+        function navigateMonth(direction) {
+            currentDate.setMonth(currentDate.getMonth() + direction);
+            updateCalendar();
+        }
+
+        function updateCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('currentMonth').textContent = new Date(year, month).toLocaleDateString('th-TH', { year: 'numeric', month: 'long' });
+
+            const monthlyTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return transactionDate.getFullYear() === year && transactionDate.getMonth() === month;
+            });
+
+            updateMonthlySummary(monthlyTransactions);
+            generateCalendarGrid(year, month, monthlyTransactions);
+        }
+
+        function updateMonthlySummary(monthlyTransactions) {
+            const income = monthlyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            const expense = monthlyTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            const balance = income - expense;
+
+            document.getElementById('monthlyIncome').textContent = income.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            document.getElementById('monthlyExpense').textContent = expense.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            document.getElementById('monthlyBalance').textContent = balance.toLocaleString('th-TH', {minimumFractionDigits: 2});
+        }
+
+        function generateCalendarGrid(year, month, transactions) {
+            const grid = document.getElementById('calendarGrid');
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const transactionsByDate = {};
+            transactions.forEach(t => {
+                const date = new Date(t.date).getDate();
+                if (!transactionsByDate[date]) transactionsByDate[date] = { income: 0, expense: 0 };
+                if (t.type === 'income') transactionsByDate[date].income += parseFloat(t.amount);
+                else transactionsByDate[date].expense += parseFloat(t.amount);
+            });
+
+            let html = '';
+            const dayHeaders = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+            dayHeaders.forEach(day => {
+                html += `<div class="p-3 text-center font-semibold text-slate-600 bg-slate-100 rounded-lg">${day}</div>`;
+            });
+
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="p-2 h-28 bg-slate-50 rounded-lg opacity-50"></div>';
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayData = transactionsByDate[day];
+                const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
+                html += `
+                    <div class="p-3 h-28 border-2 ${isToday ? 'bg-blue-50 border-blue-300' : 'bg-white/70 border-slate-200'} rounded-lg hover:bg-white transition-all transform hover:scale-105 pearl-shadow">
+                        <div class="font-semibold text-sm mb-2 ${isToday ? 'text-blue-600' : 'text-slate-700'}">${day}</div>
+                        ${dayData ? `
+                            <div class="text-xs space-y-1 overflow-hidden">
+                                ${dayData.income > 0 ? `<div class="text-emerald-600 font-medium truncate">+${dayData.income.toLocaleString('th-TH', {maximumFractionDigits: 0})}</div>` : ''}
+                                ${dayData.expense > 0 ? `<div class="text-rose-600 font-medium truncate">-${dayData.expense.toLocaleString('th-TH', {maximumFractionDigits: 0})}</div>` : ''}
+                            </div>` : ''}
+                    </div>`;
+            }
+            grid.innerHTML = html;
+        }
+
+        // --- UTILITY FUNCTIONS ---
+        function isApiConfigured() {
+            return GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== 'YOUR_GOOGLE_SCRIPT_URL_HERE';
+        }
+
+        function updateConnectionStatus(connected) {
+            const status = document.getElementById('connectionStatus');
+            const instructions = document.getElementById('setupInstructions');
+            
+            if (connected) {
+                status.className = 'w-3 h-3 bg-green-400 rounded-full animate-pulse';
+                instructions.innerHTML = '<p class="text-green-600 font-medium">✅ เชื่อมต่อ Google Sheets สำเร็จ!</p>';
+            } else if (!isApiConfigured()) {
+                status.className = 'w-3 h-3 bg-red-400 rounded-full';
+                instructions.innerHTML = `<p class="text-amber-600 font-medium">⚠️ ยังไม่ได้ตั้งค่า Google Sheets</p><p class="mt-1">กรุณาแทนที่ <code class="bg-slate-200 px-1 rounded">YOUR_GOOGLE_SCRIPT_URL_HERE</code> ด้วย URL ของคุณ</p>`;
+            } else {
+                status.className = 'w-3 h-3 bg-amber-400 rounded-full';
+                instructions.innerHTML = '<p class="text-amber-600 font-medium">⚠️ ไม่สามารถเชื่อมต่อ (ใช้งานแบบออฟไลน์)</p>';
+            }
+        }
+        
+        function showSampleData() {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            transactions = [
+                { type: 'expense', amount: 350, category: 'อาหาร', payment_method: 'cash', description: 'อาหารเที่ยง', date: today.toISOString().split('T')[0], timestamp: today.toISOString(), id: Date.now() + 1 },
+                { type: 'income', amount: 15000, category: 'เงินเดือน', payment_method: 'transfer', description: 'เงินเดือนประจำเดือน', date: yesterday.toISOString().split('T')[0], timestamp: yesterday.toISOString(), id: Date.now() + 2 }
+            ];
+            displayRecentTransactions();
+        }
+
+        function setLoadingState(button, isLoading, defaultText = '', loadingText = '') {
+            const textSpan = button.querySelector('span:not(.hidden)');
+            const loadingSpan = button.querySelector('span.hidden');
+
+            if (isLoading) {
+                button.classList.add('loading');
+                if (textSpan) textSpan.classList.add('hidden');
+                if (loadingSpan) loadingSpan.classList.remove('hidden');
+            } else {
+                button.classList.remove('loading');
+                if (textSpan) textSpan.classList.remove('hidden');
+                if (loadingSpan) loadingSpan.classList.add('hidden');
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            const styles = {
+                success: 'bg-emerald-500 text-white',
+                error: 'bg-rose-500 text-white',
+                warning: 'bg-amber-500 text-white',
+                info: 'bg-blue-500 text-white'
+            };
+            notification.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg z-50 transform transition-all duration-300 translate-x-full ${styles[type] || styles.success}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
     </script>
 </body>
 </html>
-�
