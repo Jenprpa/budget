@@ -1,22 +1,14 @@
-// Google Apps Script สำหรับบันทึกรายรับรายจ่าย
+// Google Apps Script v6 - เพิ่ม note ในสินเชื่อ
 const SPREADSHEET_ID = '1dFqF8Kt95kCLEiFFH-Y16R4Xn6HRSbfYea7W-4jJVks';
 
 function doGet(e) {
   const action = e.parameter.action;
-  
   try {
-    if (action === 'getTransactions') {
-      return getSheetDataAsJSON('Transactions');
-    } else if (action === 'getLoans') {
-      return getSheetDataAsJSON('Loans');
-    }
-    
+    if (action === 'getTransactions') return getSheetDataAsJSON('Transactions');
+    if (action === 'getLoans') return getSheetDataAsJSON('Loans');
     throw new Error('Invalid GET action');
-    
   } catch (error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({success: false, error: error.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: error.toString() })).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -38,9 +30,7 @@ function doPost(e) {
         throw new Error('Invalid POST action');
     }
   } catch (error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({success: false, error: error.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: error.toString() })).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -48,20 +38,13 @@ function getSheetDataAsJSON(sheetName) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(sheetName);
   
-  if (!sheet) {
-    return ContentService
-      .createTextOutput(JSON.stringify({success: true, data: []}))
-      .setMimeType(ContentService.MimeType.JSON);
+  if (!sheet || sheet.getLastRow() < 2) {
+    return ContentService.createTextOutput(JSON.stringify({ success: true, data: [] })).setMimeType(ContentService.MimeType.JSON);
   }
   
   const data = sheet.getDataRange().getValues();
-  if (data.length <= 1) {
-    return ContentService
-      .createTextOutput(JSON.stringify({success: true, data: []}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-
   const headers = data.shift();
+  
   const jsonData = data.map(row => {
     const obj = {};
     headers.forEach((header, i) => {
@@ -70,49 +53,33 @@ function getSheetDataAsJSON(sheetName) {
     return obj;
   });
   
-  return ContentService
-    .createTextOutput(JSON.stringify({success: true, data: jsonData}))
-    .setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify({ success: true, data: jsonData })).setMimeType(ContentService.MimeType.JSON);
 }
 
 function addRowToSheet(sheetName, data) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(sheetName);
   
-  // กำหนด Headers ให้ตรงกับชีทของคุณ
-  const headers = ['วันที่', 'เวลา', 'ประเภท', 'จำนวนเงิน', 'หมวดหมู่', 'วิธีการชำระ', 'รายละเอียด', 'สถานะ', 'id', 'timestamp'];
-  
+  const now = new Date();
+  data.time = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  data.timestamp = now.toISOString();
+
   if (!sheet) {
     sheet = ss.insertSheet(sheetName);
+    const headers = (sheetName === 'Loans')
+      ? ['id', 'date', 'loanName', 'type', 'amount', 'interestRate', 'term', 'monthlyPayment', 'startDate', 'note', 'time', 'timestamp']
+      : ['id', 'date', 'item', 'type', 'category', 'amount', 'note', 'time', 'timestamp'];
     sheet.appendRow(headers);
   }
   
-  const now = new Date();
-  const time = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-  const typeMap = { 'income': 'รายรับ', 'expense': 'รายจ่าย', 'loan': 'เงินกู้', 'borrow': 'กู้เพิ่ม', 'repay': 'ชำระคืน' };
-
-  // **แก้ไขส่วนนี้** สร้าง Object เพื่อจับคู่ข้อมูลให้ถูกต้อง
-  const newRowData = {
-    'วันที่': data.date,
-    'เวลา': time,
-    'ประเภท': typeMap[data.type] || data.type,
-    'จำนวนเงิน': data.amount,
-    'หมวดหมู่': data.category || data.loanName, // ใช้ category หรือ loanName
-    'วิธีการชำระ': data.paymentMethod || 'เงินสด', // ใส่ค่าเริ่มต้นถ้าไม่มี
-    'รายละเอียด': data.item || data.loanName,
-    'สถานะ': data.status || 'สำเร็จ', // ใส่ค่าเริ่มต้นถ้าไม่มี
-    'id': data.id,
-    'timestamp': now.toISOString()
-  };
-
-  const newRow = headers.map(header => newRowData[header] || '');
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const newRow = headers.map(header => data[header] || '');
+  
   sheet.appendRow(newRow);
   
-  return ContentService
-    .createTextOutput(JSON.stringify({success: true, message: 'Row added'}))
-    .setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify({ success: true, message: 'Row added' })).setMimeType(ContentService.MimeType.JSON);
 }
+
 
 function updateRowInSheet(sheetName, data) {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(sheetName);
@@ -121,29 +88,14 @@ function updateRowInSheet(sheetName, data) {
   const headers = values[0];
   const idColumnIndex = headers.indexOf('id');
 
-  if (idColumnIndex === -1) {
-    throw new Error("'id' column not found in the sheet.");
-  }
+  if (idColumnIndex === -1) throw new Error("'id' column not found");
 
   for (let i = 1; i < values.length; i++) {
     if (values[i][idColumnIndex] == data.id) {
-      const typeMap = { 'income': 'รายรับ', 'expense': 'รายจ่าย', 'loan': 'เงินกู้' };
-      const updatedRowData = {
-        'วันที่': data.date,
-        'เวลา': new Date().toLocaleTimeString('th-TH'),
-        'ประเภท': typeMap[data.type] || data.type,
-        'จำนวนเงิน': data.amount,
-        'หมวดหมู่': data.category,
-        'วิธีการชำระ': data.paymentMethod || values[i][headers.indexOf('วิธีการชำระ')],
-        'รายละเอียด': data.item,
-        'สถานะ': data.status || values[i][headers.indexOf('สถานะ')],
-        'id': data.id,
-        'timestamp': new Date().toISOString()
-      };
-      
-      const newRow = headers.map(header => updatedRowData[header] || '');
+      data.timestamp = new Date().toISOString();
+      const newRow = headers.map(header => data[header] !== undefined ? data[header] : values[i][headers.indexOf(header)]);
       sheet.getRange(i + 1, 1, 1, headers.length).setValues([newRow]);
-      return ContentService.createTextOutput(JSON.stringify({success: true, message: 'Row updated'})).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ success: true, message: 'Row updated' })).setMimeType(ContentService.MimeType.JSON);
     }
   }
   throw new Error('Row not found for update');
@@ -155,14 +107,12 @@ function deleteRowFromSheet(sheetName, id) {
   const values = dataRange.getValues();
   const idColumnIndex = values[0].indexOf('id');
 
-  if (idColumnIndex === -1) {
-    throw new Error("'id' column not found in the sheet.");
-  }
+  if (idColumnIndex === -1) throw new Error("'id' column not found");
 
   for (let i = values.length - 1; i > 0; i--) {
     if (values[i][idColumnIndex] == id) {
       sheet.deleteRow(i + 1);
-      return ContentService.createTextOutput(JSON.stringify({success: true, message: 'Row deleted'})).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ success: true, message: 'Row deleted' })).setMimeType(ContentService.MimeType.JSON);
     }
   }
   throw new Error('Row not found for deletion');
