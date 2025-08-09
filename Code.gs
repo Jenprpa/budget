@@ -79,6 +79,7 @@ function addRowToSheet(sheetName, data) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(sheetName);
   
+  // กำหนด Headers ให้ตรงกับชีทของคุณ
   const headers = ['วันที่', 'เวลา', 'ประเภท', 'จำนวนเงิน', 'หมวดหมู่', 'วิธีการชำระ', 'รายละเอียด', 'สถานะ', 'id', 'timestamp'];
   
   if (!sheet) {
@@ -97,10 +98,10 @@ function addRowToSheet(sheetName, data) {
     'เวลา': time,
     'ประเภท': typeMap[data.type] || data.type,
     'จำนวนเงิน': data.amount,
-    'หมวดหมู่': data.category || data.loanName,
-    'วิธีการชำระ': data.paymentMethod || 'เงินสด',
+    'หมวดหมู่': data.category || data.loanName, // ใช้ category หรือ loanName
+    'วิธีการชำระ': data.paymentMethod || 'เงินสด', // ใส่ค่าเริ่มต้นถ้าไม่มี
     'รายละเอียด': data.item || data.loanName,
-    'สถานะ': data.status || 'สำเร็จ',
+    'สถานะ': data.status || 'สำเร็จ', // ใส่ค่าเริ่มต้นถ้าไม่มี
     'id': data.id,
     'timestamp': now.toISOString()
   };
