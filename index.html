@@ -333,7 +333,7 @@
 
     <script>
         // --- CONFIGURATION ---
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxLDL8-6ErwYcq-7a55VYZP1ctMl-G_9YqxUKkDnIK3fgBqONfNBzjvg7oySut499c2/exec'; 
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBz-q3eLOSTiV-0oSODx4zjkDWHUf3KvFToff5-oYvq0z1xpM4vFy5qMQee3jAz5bk/exec'; 
 
         // --- GLOBAL STATE ---
         let transactions = [];
@@ -370,7 +370,7 @@
 
                 transactions = transData.map(mapSheetTransactionToApp).filter(Boolean);
                 loanTransactions = loansData.map(mapSheetLoanToApp).filter(Boolean);
-                allTransactions = [...transactions]; // Store a copy for filtering
+                allTransactions = [...transactions];
                 
                 updateAllDisplays();
                 updateConnectionStatus(true, `เชื่อมต่อสำเร็จ - ${new Date().toLocaleTimeString('th-TH')}`);
@@ -430,12 +430,13 @@
             const body = { action, ...payload };
             const response = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                mode: 'cors',
+                // **แก้ไขส่วนนี้**
+                mode: 'cors', 
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(body)
             });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
+            return await response.json(); 
         }
 
         async function handleTransactionSubmit(e) {
@@ -451,19 +452,22 @@
                 amount: parseFloat(document.getElementById('transactionAmount').value),
                 note: document.getElementById('transactionNote').value || '-'
             };
-
-            allTransactions.unshift(formData);
-            transactions = [...allTransactions];
-            updateAllDisplays();
-            e.target.reset();
-            document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
-
+            
             try {
-                await apiCall('addTransaction', formData);
-                showNotification('✅ บันทึกรายการเรียบร้อยแล้ว!', 'success');
+                const result = await apiCall('addTransaction', formData);
+                if (result.success) {
+                    showNotification('✅ บันทึกรายการเรียบร้อยแล้ว!', 'success');
+                    allTransactions.unshift(formData);
+                    transactions = [...allTransactions];
+                    updateAllDisplays();
+                    e.target.reset();
+                    document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
+                } else {
+                    throw new Error(result.error);
+                }
             } catch (error) {
                 console.error('Error adding transaction:', error);
-                showNotification('⚠️ บันทึกออฟไลน์, เชื่อมต่อไม่สำเร็จ', 'warning');
+                showNotification('⚠️ เกิดข้อผิดพลาดในการบันทึก', 'error');
             } finally {
                 setLoadingState('transactionSubmitBtn', false);
             }
@@ -482,38 +486,32 @@
                 note: document.getElementById('editTransactionNote').value || '-'
             };
 
-            const index = allTransactions.findIndex(t => t.id == id);
-            if (index !== -1) allTransactions[index] = updatedData;
-            transactions = [...allTransactions];
-            updateAllDisplays();
-            closeEditTransactionModal();
-
             try {
                 await apiCall('updateTransaction', updatedData);
                 showNotification('✅ แก้ไขรายการเรียบร้อยแล้ว!', 'success');
+                const index = allTransactions.findIndex(t => t.id == id);
+                if (index !== -1) allTransactions[index] = updatedData;
+                transactions = [...allTransactions];
+                updateAllDisplays();
+                closeEditTransactionModal();
             } catch (error) {
                 console.error('Error updating transaction:', error);
-                showNotification('⚠️ แก้ไขออฟไลน์, เชื่อมต่อไม่สำเร็จ', 'warning');
+                showNotification('⚠️ เกิดข้อผิดพลาดในการแก้ไข', 'error');
             }
         }
 
         async function deleteTransaction(id) {
             if (!confirm('คุณต้องการลบรายการนี้หรือไม่?')) return;
             
-            const originalTransactions = [...allTransactions];
-            allTransactions = allTransactions.filter(t => t.id != id);
-            transactions = [...allTransactions];
-            updateAllDisplays();
-
             try {
                 await apiCall('deleteTransaction', { id });
                 showNotification('🗑️ ลบรายการแล้ว', 'info');
-            } catch (error) {
-                console.error('Error deleting transaction:', error);
-                showNotification('⚠️ ไม่สามารถลบได้, เชื่อมต่อไม่สำเร็จ', 'error');
-                allTransactions = originalTransactions; // Revert
+                allTransactions = allTransactions.filter(t => t.id != id);
                 transactions = [...allTransactions];
                 updateAllDisplays();
+            } catch (error) {
+                console.error('Error deleting transaction:', error);
+                showNotification('⚠️ ไม่สามารถลบได้', 'error');
             }
         }
 
@@ -529,27 +527,27 @@
                 amount: parseFloat(document.getElementById('loanAmount').value),
             };
 
-            loanTransactions.push(loanData);
-            updateAllDisplays();
-            e.target.reset();
-            document.getElementById('loanDate').value = new Date().toISOString().split('T')[0];
-
             try {
-                await apiCall('addLoan', loanData);
-                showNotification('✅ บันทึกรายการสินเชื่อเรียบร้อยแล้ว!', 'success');
+                const result = await apiCall('addLoan', loanData);
+                if (result.success) {
+                    showNotification('✅ บันทึกรายการสินเชื่อเรียบร้อยแล้ว!', 'success');
+                    loanTransactions.push(loanData);
+                    updateAllDisplays();
+                    e.target.reset();
+                    document.getElementById('loanDate').value = new Date().toISOString().split('T')[0];
+                } else {
+                    throw new Error(result.error);
+                }
             } catch (error) {
                 console.error('Error adding loan:', error);
-                showNotification('⚠️ เพิ่มสินเชื่อออฟไลน์, เชื่อมต่อไม่สำเร็จ', 'warning');
+                showNotification('⚠️ เกิดข้อผิดพลาดในการบันทึกสินเชื่อ', 'error');
             } finally {
                 setLoadingState('loanSubmitBtn', false);
             }
         }
 
         async function loadFromGoogleSheets(sheetName) {
-            const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=get${sheetName}&t=${Date.now()}`, {
-                method: 'GET',
-                mode: 'cors'
-            });
+            const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=get${sheetName}&t=${Date.now()}`);
             const result = await response.json();
             if (!result.success) throw new Error(result.error || `Failed to load ${sheetName}`);
             return result.data || [];
@@ -643,7 +641,7 @@
 
         function displayLoans() {
             const container = document.getElementById('loanList');
-            const loanGroups = getLoanBalances(true); // Get detailed groups
+            const loanGroups = getLoanBalances(true);
             
             if (Object.keys(loanGroups).length === 0) {
                 container.innerHTML = `<div class="text-center py-8 text-gray-500"><div class="text-4xl mb-2">💳</div><p>ยังไม่มีรายการสินเชื่อ</p></div>`;
@@ -653,7 +651,7 @@
             container.innerHTML = Object.keys(loanGroups).map(loanName => {
                 const group = loanGroups[loanName];
                 const balance = group.balance;
-                if (balance <= 0) return ''; // Don't show paid off loans here
+                if (balance <= 0) return '';
                 return `
                     <div class="bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl p-6 card-shadow">
                         <div class="flex justify-between items-center mb-4">
@@ -836,9 +834,6 @@
                 notification.classList.add('translate-x-full');
                 setTimeout(() => document.body.contains(notification) && document.body.removeChild(notification), 300);
             }, 3000);
-        }
-        function copyGoogleScript() {
-            navigator.clipboard.writeText(document.getElementById('googleScriptCode').textContent).then(() => showNotification('📋 คัดลอกโค้ดแล้ว!', 'info'));
         }
     </script>
 </body>
