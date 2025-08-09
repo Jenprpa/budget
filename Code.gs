@@ -1,5 +1,4 @@
 // Google Apps Script สำหรับบันทึกรายรับรายจ่าย
-// **สำคัญ:** แก้ไข SPREADSHEET_ID ให้ตรงกับ Google Sheets ของคุณ
 const SPREADSHEET_ID = '1dFqF8Kt95kCLEiFFH-Y16R4Xn6HRSbfYea7W-4jJVks';
 
 function doGet(e) {
@@ -80,7 +79,6 @@ function addRowToSheet(sheetName, data) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(sheetName);
   
-  // กำหนด Headers ให้ตรงกับชีทของคุณ
   const headers = ['วันที่', 'เวลา', 'ประเภท', 'จำนวนเงิน', 'หมวดหมู่', 'วิธีการชำระ', 'รายละเอียด', 'สถานะ', 'id', 'timestamp'];
   
   if (!sheet) {
@@ -88,22 +86,21 @@ function addRowToSheet(sheetName, data) {
     sheet.appendRow(headers);
   }
   
-  // สร้างข้อมูลสำหรับแถวใหม่ให้ตรงกับ Headers
   const now = new Date();
   const time = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  // แปลงประเภทจากภาษาอังกฤษเป็นไทย
   const typeMap = { 'income': 'รายรับ', 'expense': 'รายจ่าย', 'loan': 'เงินกู้', 'borrow': 'กู้เพิ่ม', 'repay': 'ชำระคืน' };
 
+  // **แก้ไขส่วนนี้** สร้าง Object เพื่อจับคู่ข้อมูลให้ถูกต้อง
   const newRowData = {
     'วันที่': data.date,
     'เวลา': time,
     'ประเภท': typeMap[data.type] || data.type,
     'จำนวนเงิน': data.amount,
-    'หมวดหมู่': data.category || data.loanName, // ใช้ category หรือ loanName
-    'วิธีการชำระ': data.paymentMethod || 'เงินสด', // ใส่ค่าเริ่มต้นถ้าไม่มี
+    'หมวดหมู่': data.category || data.loanName,
+    'วิธีการชำระ': data.paymentMethod || 'เงินสด',
     'รายละเอียด': data.item || data.loanName,
-    'สถานะ': data.status || 'สำเร็จ', // ใส่ค่าเริ่มต้นถ้าไม่มี
+    'สถานะ': data.status || 'สำเร็จ',
     'id': data.id,
     'timestamp': now.toISOString()
   };
@@ -132,7 +129,7 @@ function updateRowInSheet(sheetName, data) {
       const typeMap = { 'income': 'รายรับ', 'expense': 'รายจ่าย', 'loan': 'เงินกู้' };
       const updatedRowData = {
         'วันที่': data.date,
-        'เวลา': new Date().toLocaleTimeString('th-TH'), // อัปเดตเวลา
+        'เวลา': new Date().toLocaleTimeString('th-TH'),
         'ประเภท': typeMap[data.type] || data.type,
         'จำนวนเงิน': data.amount,
         'หมวดหมู่': data.category,
