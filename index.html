@@ -205,27 +205,50 @@
                 <h2 class="text-2xl font-semibold text-gray-700 mb-6 flex items-center">
                     <span class="mr-3">💳</span>บันทึกรายการสินเชื่อ
                 </h2>
-                <form id="loanForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-3">วันที่</label>
-                        <input type="date" id="loanDate" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent bg-white/90 transition-all" required>
-                    </div>
+                <form id="loanForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-3">ชื่อสินเชื่อ</label>
-                        <input type="text" id="loanName" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent bg-white/90 transition-all" placeholder="เช่น สินเชื่อบ้าน, บัตรเครดิต" required>
+                        <input type="text" id="loanName" class="w-full p-4 border-2 border-gray-200 rounded-xl" placeholder="เช่น สินเชื่อบ้าน" required>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-3">ประเภท</label>
-                        <select id="loanTransactionType" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent bg-white/90 transition-all" required>
-                            <option value="borrow">🏦 กู้เพิ่ม</option>
+                        <select id="loanTransactionType" class="w-full p-4 border-2 border-gray-200 rounded-xl" required>
+                            <option value="borrow">🏦 กู้เพิ่ม / สร้างใหม่</option>
                             <option value="repay">💰 ชำระคืน</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-3">จำนวนเงิน (บาท)</label>
-                        <input type="number" id="loanAmount" step="0.01" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent bg-white/90 transition-all" placeholder="0.00" required>
+                        <input type="number" id="loanAmount" step="0.01" class="w-full p-4 border-2 border-gray-200 rounded-xl" placeholder="0.00" required>
                     </div>
-                    <div class="md:col-span-2">
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">วันที่ทำรายการ</label>
+                        <input type="date" id="loanDate" class="w-full p-4 border-2 border-gray-200 rounded-xl" required>
+                    </div>
+                    <div class="lg:col-span-4 border-t pt-6 mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                        <h3 class="md:col-span-full text-lg font-semibold text-gray-600">ข้อมูลเพิ่มเติม (สำหรับสร้างสินเชื่อใหม่)</h3>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">วันที่เริ่มสัญญา</label>
+                            <input type="date" id="loanStartDate" class="w-full p-4 border-2 border-gray-200 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">ดอกเบี้ย (% ต่อปี)</label>
+                            <input type="number" id="loanInterestRate" step="0.01" class="w-full p-4 border-2 border-gray-200 rounded-xl" placeholder="เช่น 5.5">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">ระยะเวลา (เดือน)</label>
+                            <input type="number" id="loanTerm" class="w-full p-4 border-2 border-gray-200 rounded-xl" placeholder="เช่น 360">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">ค่างวด (บาท/เดือน)</label>
+                            <input type="number" id="loanMonthlyPayment" step="0.01" class="w-full p-4 border-2 border-gray-200 rounded-xl" placeholder="0.00">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">หมายเหตุ</label>
+                            <input type="text" id="loanNote" class="w-full p-4 border-2 border-gray-200 rounded-xl" placeholder="ไม่บังคับ">
+                        </div>
+                    </div>
+                    <div class="lg:col-span-4">
                         <button type="submit" id="loanSubmitBtn" class="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg">
                             <span id="loanSubmitText">✅ บันทึกรายการสินเชื่อ</span>
                             <span id="loanLoadingText" class="hidden">⏳ กำลังบันทึก...</span>
@@ -292,15 +315,15 @@
                 <input type="hidden" id="editTransactionId">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-3">วันที่</label>
-                    <input type="date" id="editTransactionDate" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent bg-white transition-all" required>
+                    <input type="date" id="editTransactionDate" class="w-full p-4 border-2 border-gray-200 rounded-xl" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-3">รายการ</label>
-                    <input type="text" id="editTransactionItem" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent bg-white transition-all" required>
+                    <input type="text" id="editTransactionItem" class="w-full p-4 border-2 border-gray-200 rounded-xl" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-3">ประเภท</label>
-                    <select id="editTransactionType" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent bg-white transition-all" required>
+                    <select id="editTransactionType" class="w-full p-4 border-2 border-gray-200 rounded-xl" required>
                         <option value="income">💰 รายรับ</option>
                         <option value="expense">💸 รายจ่าย</option>
                         <option value="loan">🏦 เงินกู้</option>
@@ -308,22 +331,22 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-3">หมวดหมู่</label>
-                    <select id="editTransactionCategory" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent bg-white transition-all" required>
+                    <select id="editTransactionCategory" class="w-full p-4 border-2 border-gray-200 rounded-xl" required>
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-3">จำนวนเงิน (บาท)</label>
-                    <input type="number" id="editTransactionAmount" step="0.01" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent bg-white transition-all" required>
+                    <input type="number" id="editTransactionAmount" step="0.01" class="w-full p-4 border-2 border-gray-200 rounded-xl" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-3">หมายเหตุ</label>
-                    <input type="text" id="editTransactionNote" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent bg-white transition-all">
+                    <input type="text" id="editTransactionNote" class="w-full p-4 border-2 border-gray-200 rounded-xl">
                 </div>
                 <div class="md:col-span-2 flex space-x-4">
-                    <button type="button" onclick="closeEditTransactionModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-4 px-6 rounded-xl transition-all">
+                    <button type="button" onclick="closeEditTransactionModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-4 px-6 rounded-xl">
                         ยกเลิก
                     </button>
-                    <button type="submit" class="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-medium py-4 px-6 rounded-xl">
                         บันทึกการแก้ไข
                     </button>
                 </div>
@@ -342,7 +365,7 @@
             income: ['เงินเดือน', 'ค่าขายสินค้า/บริการ', 'ดอกเบี้ย', 'อื่น ๆ'],
             expense: ['อาหาร', 'เดินทาง', 'ที่อยู่อาศัย', 'การศึกษา', 'ชำระหนี้', 'อื่น ๆ']
         };
-        let allTransactions = []; // For filtering
+        let allTransactions = [];
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => initializeApp());
@@ -388,24 +411,17 @@
         function setupEventListeners() {
             document.getElementById('transactionTab').addEventListener('click', () => switchTab('transaction'));
             document.getElementById('loanTab').addEventListener('click', () => switchTab('loan'));
-            
             document.getElementById('transactionForm').addEventListener('submit', handleTransactionSubmit);
             document.getElementById('loanForm').addEventListener('submit', handleLoanSubmit);
             document.getElementById('addCategoryForm').addEventListener('submit', handleAddCategory);
             document.getElementById('editTransactionForm').addEventListener('submit', handleEditTransactionSubmit);
-            
             document.getElementById('transactionType').addEventListener('change', updateCategoryOptions);
             document.getElementById('editTransactionType').addEventListener('change', updateEditCategoryOptions);
-
             document.getElementById('transactionList').addEventListener('click', (e) => {
                 const editButton = e.target.closest('.edit-btn');
                 const deleteButton = e.target.closest('.delete-btn');
-                if (editButton) {
-                    openEditModal(editButton.dataset.id);
-                }
-                if (deleteButton) {
-                    deleteTransaction(deleteButton.dataset.id);
-                }
+                if (editButton) openEditModal(editButton.dataset.id);
+                if (deleteButton) deleteTransaction(deleteButton.dataset.id);
             });
         }
 
@@ -430,19 +446,17 @@
             const body = { action, ...payload };
             const response = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                // **แก้ไขส่วนนี้**
-                mode: 'cors', 
+                mode: 'cors',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(body)
             });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json(); 
+            return await response.json();
         }
 
         async function handleTransactionSubmit(e) {
             e.preventDefault();
             setLoadingState('transactionSubmitBtn', true);
-
             const formData = {
                 id: Date.now().toString(),
                 date: document.getElementById('transactionDate').value,
@@ -452,7 +466,6 @@
                 amount: parseFloat(document.getElementById('transactionAmount').value),
                 note: document.getElementById('transactionNote').value || '-'
             };
-            
             try {
                 const result = await apiCall('addTransaction', formData);
                 if (result.success) {
@@ -462,15 +475,9 @@
                     updateAllDisplays();
                     e.target.reset();
                     document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
-                } else {
-                    throw new Error(result.error);
-                }
-            } catch (error) {
-                console.error('Error adding transaction:', error);
-                showNotification('⚠️ เกิดข้อผิดพลาดในการบันทึก', 'error');
-            } finally {
-                setLoadingState('transactionSubmitBtn', false);
-            }
+                } else { throw new Error(result.error); }
+            } catch (error) { console.error('Error adding transaction:', error); showNotification('⚠️ เกิดข้อผิดพลาดในการบันทึก', 'error');
+            } finally { setLoadingState('transactionSubmitBtn', false); }
         }
         
         async function handleEditTransactionSubmit(e) {
@@ -485,7 +492,6 @@
                 amount: parseFloat(document.getElementById('editTransactionAmount').value),
                 note: document.getElementById('editTransactionNote').value || '-'
             };
-
             try {
                 await apiCall('updateTransaction', updatedData);
                 showNotification('✅ แก้ไขรายการเรียบร้อยแล้ว!', 'success');
@@ -494,39 +500,35 @@
                 transactions = [...allTransactions];
                 updateAllDisplays();
                 closeEditTransactionModal();
-            } catch (error) {
-                console.error('Error updating transaction:', error);
-                showNotification('⚠️ เกิดข้อผิดพลาดในการแก้ไข', 'error');
-            }
+            } catch (error) { console.error('Error updating transaction:', error); showNotification('⚠️ เกิดข้อผิดพลาดในการแก้ไข', 'error'); }
         }
 
         async function deleteTransaction(id) {
             if (!confirm('คุณต้องการลบรายการนี้หรือไม่?')) return;
-            
             try {
                 await apiCall('deleteTransaction', { id });
                 showNotification('🗑️ ลบรายการแล้ว', 'info');
                 allTransactions = allTransactions.filter(t => t.id != id);
                 transactions = [...allTransactions];
                 updateAllDisplays();
-            } catch (error) {
-                console.error('Error deleting transaction:', error);
-                showNotification('⚠️ ไม่สามารถลบได้', 'error');
-            }
+            } catch (error) { console.error('Error deleting transaction:', error); showNotification('⚠️ ไม่สามารถลบได้', 'error'); }
         }
 
         async function handleLoanSubmit(e) {
             e.preventDefault();
             setLoadingState('loanSubmitBtn', true);
-
             const loanData = {
                 id: Date.now().toString(),
                 date: document.getElementById('loanDate').value,
                 loanName: document.getElementById('loanName').value,
                 type: document.getElementById('loanTransactionType').value,
                 amount: parseFloat(document.getElementById('loanAmount').value),
+                startDate: document.getElementById('loanStartDate').value || null,
+                interestRate: parseFloat(document.getElementById('loanInterestRate').value) || null,
+                term: parseInt(document.getElementById('loanTerm').value) || null,
+                monthlyPayment: parseFloat(document.getElementById('loanMonthlyPayment').value) || null,
+                note: document.getElementById('loanNote').value || '-'
             };
-
             try {
                 const result = await apiCall('addLoan', loanData);
                 if (result.success) {
@@ -535,15 +537,9 @@
                     updateAllDisplays();
                     e.target.reset();
                     document.getElementById('loanDate').value = new Date().toISOString().split('T')[0];
-                } else {
-                    throw new Error(result.error);
-                }
-            } catch (error) {
-                console.error('Error adding loan:', error);
-                showNotification('⚠️ เกิดข้อผิดพลาดในการบันทึกสินเชื่อ', 'error');
-            } finally {
-                setLoadingState('loanSubmitBtn', false);
-            }
+                } else { throw new Error(result.error); }
+            } catch (error) { console.error('Error adding loan:', error); showNotification('⚠️ เกิดข้อผิดพลาดในการบันทึกสินเชื่อ', 'error');
+            } finally { setLoadingState('loanSubmitBtn', false); }
         }
 
         async function loadFromGoogleSheets(sheetName) {
@@ -555,37 +551,32 @@
 
         // --- MAPPING FUNCTIONS ---
         function mapSheetTransactionToApp(row) {
-            if (!row.วันที่ || !row.id) return null;
+            if (!row.date || !row.id) return null;
             return {
                 id: row.id,
-                date: new Date(row.วันที่).toISOString().split('T')[0],
-                item: row.รายละเอียด,
-                type: mapSheetTypeToAppType(row.ประเภท),
-                category: row.หมวดหมู่,
-                amount: parseFloat(row.จำนวนเงิน) || 0,
-                note: row.หมายเหตุ || ''
+                date: new Date(row.date).toISOString().split('T')[0],
+                item: row.item,
+                type: row.type,
+                category: row.category,
+                amount: parseFloat(row.amount) || 0,
+                note: row.note || ''
             };
         }
 
         function mapSheetLoanToApp(row) {
-            if (!row.วันที่ || !row.id) return null;
+            if (!row.date || !row.id) return null;
             return {
                 id: row.id,
-                date: new Date(row.วันที่).toISOString().split('T')[0],
-                loanName: row.รายละเอียด,
-                type: mapSheetLoanTypeToAppType(row.ประเภท),
-                amount: parseFloat(row.จำนวนเงิน) || 0
+                date: new Date(row.date).toISOString().split('T')[0],
+                loanName: row.loanName,
+                type: row.type,
+                amount: parseFloat(row.amount) || 0,
+                startDate: row.startDate ? new Date(row.startDate).toISOString().split('T')[0] : null,
+                interestRate: parseFloat(row.interestRate) || null,
+                term: parseInt(row.term) || null,
+                monthlyPayment: parseFloat(row.monthlyPayment) || null,
+                note: row.note || ''
             };
-        }
-
-        function mapSheetTypeToAppType(sheetType) {
-            const map = { 'รายรับ': 'income', 'รายจ่าย': 'expense', 'เงินกู้': 'loan' };
-            return map[sheetType] || 'expense';
-        }
-
-        function mapSheetLoanTypeToAppType(sheetType) {
-            const map = { 'กู้เพิ่ม': 'borrow', 'ชำระคืน': 'repay' };
-            return map[sheetType] || 'borrow';
         }
 
         // --- UI UPDATE FUNCTIONS ---
@@ -652,6 +643,7 @@
                 const group = loanGroups[loanName];
                 const balance = group.balance;
                 if (balance <= 0) return '';
+                const firstLoan = group.transactions.find(t => t.type === 'borrow');
                 return `
                     <div class="bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl p-6 card-shadow">
                         <div class="flex justify-between items-center mb-4">
@@ -661,6 +653,14 @@
                                 <div class="text-sm text-gray-600">ยอดคงเหลือ</div>
                             </div>
                         </div>
+                        ${firstLoan ? `
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4 text-center">
+                            <div><div class="font-semibold">${firstLoan.interestRate || '-'}%</div><div class="text-xs text-gray-500">ดอกเบี้ย</div></div>
+                            <div><div class="font-semibold">${firstLoan.term || '-'} เดือน</div><div class="text-xs text-gray-500">ระยะเวลา</div></div>
+                            <div><div class="font-semibold">${firstLoan.monthlyPayment ? firstLoan.monthlyPayment.toLocaleString('th-TH') : '-'} ฿</div><div class="text-xs text-gray-500">ค่างวด</div></div>
+                            <div><div class="font-semibold">${firstLoan.startDate ? new Date(firstLoan.startDate).toLocaleDateString('th-TH') : '-'}</div><div class="text-xs text-gray-500">เริ่มสัญญา</div></div>
+                        </div>
+                        ` : ''}
                         <div class="space-y-2">
                             ${group.transactions.slice(0, 5).map(t => `
                                 <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
